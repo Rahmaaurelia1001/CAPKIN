@@ -12,6 +12,7 @@ class UnitForm
         return $schema
             ->components([
                 TextInput::make('nama')
+                    ->label('Nama Unit')
                     ->required(),
             ]);
     }

@@ -20,6 +20,12 @@ class TargetIkkResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'Target IKK';
+
+    protected static ?string $modelLabel = 'Target IKK';
+
+    protected static ?string $pluralModelLabel = 'Target IKK';
+
     public static function form(Schema $schema): Schema
     {
         return TargetIkkForm::configure($schema);

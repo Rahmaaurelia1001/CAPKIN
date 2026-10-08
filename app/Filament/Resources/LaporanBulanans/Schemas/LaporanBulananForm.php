@@ -159,70 +159,74 @@ class LaporanBulananForm
                             ->required(fn (Get $get): bool => self::isIkk20($get('ikk_id')))
                             ->dehydrated(fn (Get $get): bool => self::isIkk20($get('ikk_id')))
                             ->columnSpanFull(),
-                        Textarea::make('detail_data.norma')
-                            ->label('Norma')
-                            ->placeholder('Masukkan uraian norma')
-                            ->rows(3)
-                            ->visible(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk21($get('ikk_id'))),
 
-                        Textarea::make('detail_data.standar')
-                            ->label('Standar')
-                            ->placeholder('Masukkan uraian standar')
-                            ->rows(3)
-                            ->visible(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk21($get('ikk_id'))),
+                    Repeater::make('detail_data.nspk')
+                    ->label('Detail NSPK IKK 21')
+                    ->helperText('Isi satu data untuk setiap NSPK.')
+                    ->schema([
+                        Select::make('jenis_nspk')
+                            ->label('Jenis NSPK')
+                            ->options([
+                                'Norma' => 'Norma',
+                                'Standar' => 'Standar',
+                                'Pedoman' => 'Pedoman',
+                                'Kriteria' => 'Kriteria',
+                            ])
+                            ->required(),
 
-                        Textarea::make('detail_data.pedoman')
-                            ->label('Pedoman')
-                            ->placeholder('Masukkan uraian pedoman')
-                            ->rows(3)
-                            ->visible(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk21($get('ikk_id'))),
+                        TextInput::make('nama_nspk')
+                            ->label('Nama NSPK')
+                            ->required()
+                            ->maxLength(255),
 
-                        Textarea::make('detail_data.kriteria')
-                            ->label('Kriteria')
-                            ->placeholder('Masukkan uraian kriteria')
-                            ->rows(3)
-                            ->visible(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
-                            ->columnSpanFull(),
+                        Textarea::make('keterangan')
+                            ->label('Keterangan')
+                            ->rows(2),
+                    ])
+                    ->columns(2)
+                    ->defaultItems(1)
+                    ->minItems(1)
+                    ->addActionLabel('Tambah NSPK')
+                    ->visible(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
+                    ->dehydrated(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
+                    ->columnSpanFull(),
 
-                        
-                        TextInput::make('detail_data.komponen_a')
-                            ->label('Komponen A — Dokumen Rencana Kerja')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->suffix('%')
-                            ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
+                TextInput::make('detail_data.komponen_a_pembilang')
+                ->label('Komponen A — Jumlah Unit yang Ditetapkan')
+                ->numeric()
+                ->minValue(0)
+                ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
+                ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
 
-                        TextInput::make('detail_data.komponen_b')
-                            ->label('Komponen B — Dokumen Evaluasi')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->suffix('%')
-                            ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
+                TextInput::make('detail_data.komponen_a_penyebut')
+                    ->label('Komponen A — Target Unit')
+                    ->numeric()
+                    ->minValue(0)
+                    ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
 
-                        TextInput::make('detail_data.komponen_c')
-                            ->label('Komponen C — Laporan Realisasi')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->suffix('%')
-                            ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
+                TextInput::make('detail_data.komponen_b_pembilang')
+                    ->label('Komponen B — Jumlah Layanan yang Dilaksanakan')
+                    ->numeric()
+                    ->minValue(0)
+                    ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
 
-                        TextInput::make('detail_data.judul_kerjasama')
-                            ->label('Judul Kerja Sama')
-                            ->placeholder('Masukkan judul kerja sama')
-                            ->maxLength(255)
-                            ->visible(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
-                            ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
-                            ->columnSpanFull(),
+                TextInput::make('detail_data.komponen_b_penyebut')
+                    ->label('Komponen B — Target Layanan')
+                    ->numeric()
+                    ->minValue(0)
+                    ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
+                    
+                TextInput::make('detail_data.judul_kerjasama')
+                    ->label('Judul Kerja Sama')
+                    ->placeholder('Masukkan judul kerja sama')
+                    ->maxLength(255)
+                    ->visible(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                    ->columnSpanFull(),
 
                 TextInput::make('realisasi')
                 ->label(fn (Get $get): string => self::realisasiLabel($get('ikk_id')))
@@ -231,6 +235,11 @@ class LaporanBulananForm
                 ->maxValue(fn (Get $get): ?float => self::realisasiMaksimum($get('ikk_id')))
                 ->suffix(fn (Get $get): ?string => self::realisasiSatuan($get('ikk_id')))
                 ->helperText(fn (Get $get): ?string => self::realisasiBantuan($get('ikk_id')))
+                ->visible(fn (Get $get): bool => in_array(
+                    self::kodeIkk($get('ikk_id')),
+                    ['IKK 22', 'IKK 25', 'IKK 26'],
+                    true
+                ))
                 ->required(),
 
                 FileUpload::make('bukti_dukung')
@@ -253,24 +262,24 @@ class LaporanBulananForm
                     ->rows(3)
                     ->columnSpanFull(),
             ]);
-    }
-
-    private static function isIkk20(mixed $ikkId): bool
-    {
-        if (! $ikkId) {
-            return false;
         }
 
-        $kodeIkk = Ikk::query()
-            ->whereKey($ikkId)
-            ->value('kode_ikk');
+        private static function isIkk20(mixed $ikkId): bool
+        {
+            if (! $ikkId) {
+                return false;
+            }
 
-        $kodeIkk = strtoupper(
-            str_replace([' ', '_'], '', (string) $kodeIkk)
-        );
+            $kodeIkk = Ikk::query()
+                ->whereKey($ikkId)
+                ->value('kode_ikk');
 
-        return in_array($kodeIkk, ['IKK-20', 'IKK20', '20'], true);
-    }
+            $kodeIkk = strtoupper(
+                str_replace([' ', '_'], '', (string) $kodeIkk)
+            );
+
+            return in_array($kodeIkk, ['IKK-20', 'IKK20', '20'], true);
+        }
 
     private static function isIkk21(mixed $ikkId): bool
     {
@@ -288,6 +297,17 @@ class LaporanBulananForm
 
     return in_array($kodeIkk, ['IKK-21', 'IKK21', '21'], true);
     }
+
+    private static function kodeIkk(mixed $ikkId): ?string
+{
+    if (! $ikkId) {
+        return null;
+    }
+
+    return Ikk::query()
+        ->whereKey($ikkId)
+        ->value('kode_ikk');
+}
 
     private static function realisasiLabel(mixed $ikkId): string
 {

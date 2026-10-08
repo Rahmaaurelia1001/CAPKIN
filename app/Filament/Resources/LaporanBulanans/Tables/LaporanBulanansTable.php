@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Services\KinerjaCalculator;
 
 class LaporanBulanansTable
 {
@@ -55,11 +56,17 @@ class LaporanBulanansTable
                     ->label('Tahun')
                     ->sortable(),
 
-                TextColumn::make('realisasi')
-                    ->label('Realisasi')
-                    ->numeric()
-                    ->sortable(),
-
+                            TextColumn::make('realisasi')
+                ->label('Realisasi')
+                ->state(function (LaporanBulanan $record): float {
+                    return app(KinerjaCalculator::class)
+                        ->hitung(
+                            $record->ikk_id,
+                            $record->bulan,
+                            $record->tahun
+                        )['realisasi_bulanan'];
+                })
+                ->numeric(decimalPlaces: 2),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge(),

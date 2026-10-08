@@ -18,6 +18,9 @@ use Illuminate\Database\Eloquent\Builder;
 class LaporanBulananResource extends Resource
 {
     protected static ?string $model = LaporanBulanan::class;
+    protected static ?string $navigationLabel = 'Laporan Bulanan';
+    protected static ?string $modelLabel = 'Laporan Bulanan';
+    protected static ?string $pluralModelLabel = 'Laporan Bulanan';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 

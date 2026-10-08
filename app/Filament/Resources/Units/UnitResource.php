@@ -22,6 +22,12 @@ class UnitResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'nama';
 
+    protected static ?string $navigationLabel = 'Unit';
+
+    protected static ?string $modelLabel = 'Unit';
+
+    protected static ?string $pluralModelLabel = 'Unit';
+
     public static function form(Schema $schema): Schema
     {
         return UnitForm::configure($schema);

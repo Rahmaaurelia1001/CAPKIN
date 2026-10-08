@@ -15,16 +15,23 @@ class TargetIkksTable
         return $table
             ->columns([
                 TextColumn::make('ikkPeriode.ikk.kode_ikk')
-                    ->label('IKK')
+                    ->label('Kode IKK')
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('ikkPeriode.ikk.nama_ikk')
+                    ->label('Nama Indikator Kinerja')
+                    ->searchable()
+                    ->wrap(),
+
                 TextColumn::make('tahun')
+                    ->label('Tahun')
                     ->numeric()
                     ->sortable(),
 
                 TextColumn::make('nilai_target')
-                    ->numeric()
+                    ->label('Nilai Target')
+                    ->numeric(decimalPlaces: 2)
                     ->sortable(),
 
                 TextColumn::make('created_at')

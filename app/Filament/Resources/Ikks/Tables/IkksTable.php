@@ -26,6 +26,21 @@ class IkksTable
                     ->searchable()
                     ->wrap(),
 
+                TextColumn::make('sasaranKegiatan.nama')
+                    ->label('Sasaran Kegiatan')
+                    ->wrap()
+                    ->searchable(),
+
+                TextColumn::make('jenis_perhitungan')
+                    ->label('Jenis Perhitungan')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'tunggal' => 'Tunggal',
+                        'nilai' => 'Nilai',
+                        'gabungan' => 'Gabungan',
+                        default => $state,
+                    }),
+
                 TextColumn::make('satuan')
                     ->label('Satuan')
                     ->placeholder('-'),
