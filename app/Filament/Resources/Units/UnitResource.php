@@ -22,11 +22,11 @@ class UnitResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'nama';
 
-    protected static ?string $navigationLabel = 'Unit';
+    protected static ?string $navigationLabel = 'Unit Kerja';
 
-    protected static ?string $modelLabel = 'Unit';
+    protected static ?string $modelLabel = 'Unit Kerja';
 
-    protected static ?string $pluralModelLabel = 'Unit';
+    protected static ?string $pluralModelLabel = 'Unit Kerja';
 
     public static function form(Schema $schema): Schema
     {
@@ -52,5 +52,20 @@ class UnitResource extends Resource
             'create' => CreateUnit::route('/create'),
             'edit' => EditUnit::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->role === 'admin';
     }
 }

@@ -20,56 +20,60 @@ class KinerjaCalculator
     }
 
     public function hitungRealisasiBulanan(
-        int $ikkId,
-        int $bulan,
-        int $tahun
-    ): float {
-        $sumber = IkkSumberRealisasi::query()
-            ->where('ikk_id', $ikkId)
-            ->first();
+    int $ikkId,
+    int $bulan,
+    int $tahun
+): float {
+    $sumber = IkkSumberRealisasi::query()
+        ->where('ikk_id', $ikkId)
+        ->first();
 
-        if (! $sumber) {
-            return 0;
-        }
-
-        if ($sumber->sumber_tipe === 'field') {
-            return (float) LaporanBulanan::query()
-                ->where('ikk_id', $ikkId)
-                ->where('bulan', $bulan)
-                ->where('tahun', $tahun)
-                ->sum($sumber->sumber_field);
-        }
-
-        if ($sumber->sumber_tipe === 'sum') {
-            return (float) DB::table($sumber->sumber_tabel)
-                ->join(
-                    'laporan_bulanans',
-                    'laporan_bulanans.id',
-                    '=',
-                    $sumber->sumber_tabel . '.laporan_bulanan_id'
-                )
-                ->where('laporan_bulanans.ikk_id', $ikkId)
-                ->where('laporan_bulanans.bulan', $bulan)
-                ->where('laporan_bulanans.tahun', $tahun)
-                ->sum($sumber->sumber_tabel . '.' . $sumber->sumber_field);
-        }
-
-        if ($sumber->sumber_tipe === 'count') {
-            return (float) DB::table($sumber->sumber_tabel)
-                ->join(
-                    'laporan_bulanans',
-                    'laporan_bulanans.id',
-                    '=',
-                    $sumber->sumber_tabel . '.laporan_bulanan_id'
-                )
-                ->where('laporan_bulanans.ikk_id', $ikkId)
-                ->where('laporan_bulanans.bulan', $bulan)
-                ->where('laporan_bulanans.tahun', $tahun)
-                ->count($sumber->sumber_tabel . '.' . $sumber->sumber_field);
-        }
-
+    if (! $sumber) {
         return 0;
     }
+
+    if ($sumber->sumber_tipe === 'field') {
+        return (float) LaporanBulanan::query()
+            ->where('ikk_id', $ikkId)
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->sum($sumber->sumber_field);
+    }
+
+    if ($sumber->sumber_tipe === 'sum') {
+        return (float) DB::table($sumber->sumber_tabel)
+            ->join(
+                'laporan_bulanans',
+                'laporan_bulanans.id',
+                '=',
+                $sumber->sumber_tabel . '.laporan_bulanan_id'
+            )
+            ->where('laporan_bulanans.ikk_id', $ikkId)
+            ->where('laporan_bulanans.bulan', $bulan)
+            ->where('laporan_bulanans.tahun', $tahun)
+            ->sum(
+                $sumber->sumber_tabel . '.' . $sumber->sumber_field
+            );
+    }
+
+    if ($sumber->sumber_tipe === 'count') {
+        return (float) DB::table($sumber->sumber_tabel)
+            ->join(
+                'laporan_bulanans',
+                'laporan_bulanans.id',
+                '=',
+                $sumber->sumber_tabel . '.laporan_bulanan_id'
+            )
+            ->where('laporan_bulanans.ikk_id', $ikkId)
+            ->where('laporan_bulanans.bulan', $bulan)
+            ->where('laporan_bulanans.tahun', $tahun)
+            ->count(
+                $sumber->sumber_tabel . '.' . $sumber->sumber_field
+            );
+    }
+
+    return 0;
+}
 
     public function hitungRealisasiKumulatif(
     int $ikkId,

@@ -10,6 +10,15 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (in_array($data['role'] ?? null, ['admin', 'kapus', 'kabag_umum'])) {
+            $data['unit_id'] = null;
+        }
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

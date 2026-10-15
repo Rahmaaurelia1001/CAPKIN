@@ -192,6 +192,24 @@ class LaporanBulananForm
                     ->dehydrated(fn (Get $get): bool => self::isIkk21($get('ikk_id')))
                     ->columnSpanFull(),
 
+                    Repeater::make('detail_data.kerjasama')
+                        ->label('Daftar Judul Kerja Sama IKK 28')
+                        ->helperText('Isi satu judul untuk setiap kerja sama.')
+                        ->schema([
+                            TextInput::make('judul_kerjasama')
+                                ->label('Judul Kerja Sama')
+                                ->required()
+                                ->maxLength(255),
+                        ])
+                        ->columns(1)
+                        ->defaultItems(1)
+                        ->minItems(1)
+                        ->addActionLabel('Tambah Kerja Sama')
+                        ->visible(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                        ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                        ->dehydrated(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                        ->columnSpanFull(),
+
                 TextInput::make('detail_data.komponen_a_pembilang')
                 ->label('Komponen A — Jumlah Unit yang Ditetapkan')
                 ->numeric()
@@ -220,14 +238,33 @@ class LaporanBulananForm
                     ->visible(fn (Get $get): bool => self::isIkk24($get('ikk_id')))
                     ->required(fn (Get $get): bool => self::isIkk24($get('ikk_id'))),
                     
-                TextInput::make('detail_data.judul_kerjasama')
-                    ->label('Judul Kerja Sama')
-                    ->placeholder('Masukkan judul kerja sama')
-                    ->maxLength(255)
+                                TextInput::make('detail_data.komponen_a_pembilang')
+                    ->label('Komponen A — Jumlah Kerja Sama yang Ditindaklanjuti')
+                    ->numeric()
+                    ->minValue(0)
                     ->visible(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
-                    ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
-                    ->columnSpanFull(),
+                    ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id'))),
 
+                TextInput::make('detail_data.komponen_a_penyebut')
+                    ->label('Komponen A — Jumlah Seluruh Kerja Sama yang Berlaku')
+                    ->numeric()
+                    ->minValue(0)
+                    ->visible(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id'))),
+
+                TextInput::make('detail_data.komponen_b_pembilang')
+                    ->label('Komponen B — Jumlah Kerja Sama yang Disusun')
+                    ->numeric()
+                    ->minValue(0)
+                    ->visible(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id'))),
+
+                TextInput::make('detail_data.komponen_b_penyebut')
+                    ->label('Komponen B — Target Kerja Sama yang Disusun')
+                    ->numeric()
+                    ->minValue(0)
+                    ->visible(fn (Get $get): bool => self::isIkk28($get('ikk_id')))
+                    ->required(fn (Get $get): bool => self::isIkk28($get('ikk_id'))),
                 TextInput::make('realisasi')
                 ->label(fn (Get $get): string => self::realisasiLabel($get('ikk_id')))
                 ->numeric()
@@ -247,7 +284,7 @@ class LaporanBulananForm
                     ->helperText('Format PDF atau JPG/PNG. Maksimal 10 MB.')
                     ->disk('public')
                     ->directory('bukti-dukung')
-                    ->visibility('private')
+                    ->visibility('public')
                     ->maxSize(10240)
                     ->acceptedFileTypes([
                         'application/pdf',
@@ -256,11 +293,39 @@ class LaporanBulananForm
                     ])
                     ->required(),
 
+                
                 Textarea::make('catatan')
                     ->label('Catatan (Opsional)')
                     ->placeholder('Deskripsi singkat pelaksanaan...')
                     ->rows(3)
                     ->columnSpanFull(),
+
+                Textarea::make('narasi_capaian')
+                    ->label('Narasi Capaian')
+                    ->placeholder('Jelaskan capaian kinerja pada periode ini...')
+                    ->rows(3)
+                    ->columnSpanFull(),
+
+                Textarea::make('kendala')
+                    ->label('Kendala yang Dihadapi')
+                    ->placeholder('Jelaskan kendala yang dialami, jika ada...')
+                    ->rows(3)
+                    ->columnSpanFull(),
+
+                Textarea::make('tindak_lanjut')
+                    ->label('Tindak Lanjut')
+                    ->placeholder('Jelaskan langkah tindak lanjut yang akan dilakukan...')
+                    ->rows(3)
+                    ->columnSpanFull(),
+
+                TextInput::make('realisasi_anggaran')
+                    ->label('Realisasi Anggaran (Rp)')
+                    ->numeric()
+                    ->minValue(0)
+                    ->prefix('Rp')
+                    ->placeholder('Masukkan nominal realisasi anggaran'),
+
+                
             ]);
         }
 

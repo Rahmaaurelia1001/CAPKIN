@@ -22,6 +22,12 @@ class IkkResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'nama_ikk';
+    
+    protected static ?string $navigationLabel = 'IKK';
+
+    protected static ?string $modelLabel = 'IKK';
+
+    protected static ?string $pluralModelLabel = 'IKK';
 
     public static function form(Schema $schema): Schema
     {
@@ -47,5 +53,19 @@ class IkkResource extends Resource
             'create' => CreateIkk::route('/create'),
             'edit' => EditIkk::route('/{record}/edit'),
         ];
+    }
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->role === 'admin';
     }
 }

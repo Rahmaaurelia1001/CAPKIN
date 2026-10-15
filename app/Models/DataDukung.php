@@ -7,8 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DataDukung extends Model
 {
+    // Menyesuaikan nama tabel di database
+    protected $table = 'data_dukung';
+
     protected $fillable = [
         'laporan_bulanan_id',
+        'anggaran_bulanan_id',
         'bulan',
         'tahun',
         'nama_file',
@@ -26,5 +30,10 @@ class DataDukung extends Model
     public function laporanBulanan(): BelongsTo
     {
         return $this->belongsTo(LaporanBulanan::class);
+    }
+
+    public function anggaranBulanan(): BelongsTo
+    {
+        return $this->belongsTo(AnggaranBulanan::class);
     }
 }
