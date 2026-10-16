@@ -18,13 +18,17 @@ class TargetIkkResource extends Resource
 {
     protected static ?string $model = TargetIkk::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
 
     protected static ?string $navigationLabel = 'Target IKK';
 
     protected static ?string $modelLabel = 'Target IKK';
 
     protected static ?string $pluralModelLabel = 'Target IKK';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
+
+    protected static ?int $navigationSort = 5;
 
     public static function form(Schema $schema): Schema
     {
@@ -38,17 +42,30 @@ class TargetIkkResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListTargetIkks::route('/'),
+            'index'  => ListTargetIkks::route('/'),
             'create' => CreateTargetIkk::route('/create'),
-            'edit' => EditTargetIkk::route('/{record}/edit'),
+            'edit'   => EditTargetIkk::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->role === 'admin';
     }
 }

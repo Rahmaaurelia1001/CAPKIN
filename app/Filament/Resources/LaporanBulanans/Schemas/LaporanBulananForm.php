@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\LaporanBulanans\Schemas;
 
 use App\Models\Ikk;
+use App\Models\TargetIkk;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -269,12 +270,12 @@ class LaporanBulananForm
                 ->label(fn (Get $get): string => self::realisasiLabel($get('ikk_id')))
                 ->numeric()
                 ->minValue(0)
-                ->maxValue(fn (Get $get): ?float => self::realisasiMaksimum($get('ikk_id')))
+                ->maxValue(fn (Get $get): ?float => self::realisasiMaksimum($get('ikk_id'), $get('tahun')))
                 ->suffix(fn (Get $get): ?string => self::realisasiSatuan($get('ikk_id')))
-                ->helperText(fn (Get $get): ?string => self::realisasiBantuan($get('ikk_id')))
+                ->helperText(fn (Get $get): ?string => self::realisasiBantuan($get('ikk_id'), $get('tahun')))
                 ->visible(fn (Get $get): bool => in_array(
-                    self::kodeIkk($get('ikk_id')),
-                    ['IKK 22', 'IKK 25', 'IKK 26'],
+                    self::kodeIkkClean($get('ikk_id')),
+                    ['IKK22', 'IKK25', 'IKK26'],
                     true
                 ))
                 ->required(),
@@ -363,68 +364,100 @@ class LaporanBulananForm
     return in_array($kodeIkk, ['IKK-21', 'IKK21', '21'], true);
     }
 
-    private static function kodeIkk(mixed $ikkId): ?string
-{
-    if (! $ikkId) {
-        return null;
+    private static function kodeIkkClean(mixed $ikkId): string
+    {
+        if (! $ikkId) {
+            return '';
+        }
+
+        $kode = Ikk::query()->whereKey($ikkId)->value('kode_ikk');
+        return strtoupper(str_replace([' ', '_', '-'], '', (string) $kode));
     }
 
-    return Ikk::query()
-        ->whereKey($ikkId)
-        ->value('kode_ikk');
-}
+    private static function ambilTarget(mixed $ikkId, mixed $tahun = null): ?float
+    {
+        if (! $ikkId) {
+            return null;
+        }
+
+        $tahun = (int) ($tahun ?: now()->year);
+
+        $target = TargetIkk::query()
+            ->where('tahun', $tahun)
+            ->whereHas('ikkPeriode', fn ($query) => $query->where('ikk_id', $ikkId))
+            ->value('nilai_target');
+
+        if ($target !== null) {
+            return (float) $target;
+        }
+
+        $ikk = Ikk::find($ikkId);
+        return $ikk ? (float) $ikk->target_tahunan : null;
+    }
 
     private static function realisasiLabel(mixed $ikkId): string
-{
-    $ikk = $ikkId ? Ikk::find($ikkId) : null;
+    {
+        $ikk = $ikkId ? Ikk::find($ikkId) : null;
 
-    $satuan = $ikk?->satuan ?: 'Nilai';
+        if (! $ikk) {
+            return 'Nilai Realisasi';
+        }
 
-    return "Realisasi Output Fisik ({$satuan})";
-}
+        $satuan = $ikk->satuan ? " ({$ikk->satuan})" : '';
 
-private static function realisasiMaksimum(mixed $ikkId): ?float
-{
-    $ikk = $ikkId ? Ikk::find($ikkId) : null;
-
-    if (! $ikk) {
-        return null;
+        return "Nilai Realisasi{$satuan}";
     }
 
-    if (str_contains(
-        strtolower((string) $ikk->satuan),
-        'persen'
-    )) {
-        return 100;
+    private static function realisasiMaksimum(mixed $ikkId, mixed $tahun = null): ?float
+    {
+        $ikk = $ikkId ? Ikk::find($ikkId) : null;
+
+        if (! $ikk) {
+            return null;
+        }
+
+        if (str_contains(strtolower((string) $ikk->satuan), 'persen')) {
+            return 100;
+        }
+
+        // Untuk indeks/nilai (IKK 22, 25, 26), skor evaluasi bisa mencapai 100
+        // dan boleh melebihi target tahunan (misal target 78,5 capaian nilai 90)
+        if (in_array(strtolower((string) $ikk->satuan), ['nilai', 'indeks', 'poin'], true)) {
+            return 100;
+        }
+
+        return self::ambilTarget($ikkId, $tahun);
     }
 
-    return (float) $ikk->target_tahunan;
-}
+    private static function realisasiSatuan(mixed $ikkId): ?string
+    {
+        $ikk = $ikkId ? Ikk::find($ikkId) : null;
 
-private static function realisasiSatuan(mixed $ikkId): ?string
-{
-    $ikk = $ikkId ? Ikk::find($ikkId) : null;
+        if (! $ikk) {
+            return null;
+        }
 
-    if (! $ikk) {
-        return null;
+        return str_contains(
+            strtolower((string) $ikk->satuan),
+            'persen'
+        ) ? '%' : null;
     }
 
-    return str_contains(
-        strtolower((string) $ikk->satuan),
-        'persen'
-    ) ? '%' : null;
-}
+    private static function realisasiBantuan(mixed $ikkId, mixed $tahun = null): ?string
+    {
+        $ikk = $ikkId ? Ikk::find($ikkId) : null;
 
-private static function realisasiBantuan(mixed $ikkId): ?string
-{
-    $ikk = $ikkId ? Ikk::find($ikkId) : null;
+        if (! $ikk) {
+            return null;
+        }
 
-    if (! $ikk) {
-        return null;
+        $target = self::ambilTarget($ikkId, $tahun);
+        $satuan = $ikk->satuan ?: '';
+
+        return $target !== null
+            ? "Target tahunan {$tahun}: " . number_format($target, 2, ',', '.') . ($satuan ? " {$satuan}" : '')
+            : "Satuan: {$satuan}";
     }
-
-    return "Nilai maksimal: {$ikk->target_tahunan} {$ikk->satuan}";
-}
 
 private static function isIkk24(mixed $ikkId): bool
 {

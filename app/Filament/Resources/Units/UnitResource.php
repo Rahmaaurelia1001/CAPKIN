@@ -18,7 +18,7 @@ class UnitResource extends Resource
 {
     protected static ?string $model = Unit::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
     protected static ?string $recordTitleAttribute = 'nama';
 
@@ -27,6 +27,10 @@ class UnitResource extends Resource
     protected static ?string $modelLabel = 'Unit Kerja';
 
     protected static ?string $pluralModelLabel = 'Unit Kerja';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {
@@ -40,17 +44,15 @@ class UnitResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListUnits::route('/'),
+            'index'  => ListUnits::route('/'),
             'create' => CreateUnit::route('/create'),
-            'edit' => EditUnit::route('/{record}/edit'),
+            'edit'   => EditUnit::route('/{record}/edit'),
         ];
     }
 

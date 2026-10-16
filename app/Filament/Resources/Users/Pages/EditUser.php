@@ -22,6 +22,11 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(UserResource::getUrl('index')),
             DeleteAction::make(),
         ];
     }

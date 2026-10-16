@@ -18,7 +18,7 @@ class PaguAnggaranResource extends Resource
 {
     protected static ?string $model = PaguAnggaran::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
     protected static ?string $navigationLabel = 'Pagu Anggaran';
 
@@ -28,9 +28,13 @@ class PaguAnggaranResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'nomor_revisi';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Pengelolaan Anggaran';
+
+    protected static ?int $navigationSort = 1;
+
     public static function canViewAny(): bool
     {
-        return auth()->user()?->role === 'katim_umper';
+        return in_array(auth()->user()?->role, ['katim_umper', 'admin'], true);
     }
 
     public static function canCreate(): bool
@@ -71,9 +75,9 @@ class PaguAnggaranResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListPaguAnggarans::route('/'),
+            'index'  => ListPaguAnggarans::route('/'),
             'create' => CreatePaguAnggaran::route('/create'),
-            'edit' => EditPaguAnggaran::route('/{record}/edit'),
+            'edit'   => EditPaguAnggaran::route('/{record}/edit'),
         ];
     }
 }

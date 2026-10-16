@@ -4,19 +4,24 @@ namespace App\Filament\Pages;
 
 use App\Models\LaporanBulanan;
 use Filament\Pages\Page;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
 
 class RiwayatPersetujuan extends Page
 {
     protected string $view = 'filament.pages.riwayat-persetujuan';
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clock';
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
 
-    protected static ?string $navigationLabel = 'Riwayat Persetujuan';
+    protected static ?string $navigationLabel = 'Riwayat Input & Persetujuan';
 
-    protected static ?string $title = 'Riwayat Persetujuan';
+    protected static ?string $title = 'Riwayat Input & Persetujuan Laporan';
 
     protected static ?string $slug = 'riwayat-persetujuan';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Pelaporan Kinerja';
+
+    protected static ?int $navigationSort = 2;
 
     public static function canAccess(): bool
     {
@@ -24,12 +29,10 @@ class RiwayatPersetujuan extends Page
             'pic',
             'kabid_kabag',
             'katim_umper',
-            'kabag_umum',
-            'kapus',
         ], true);
     }
 
-        public function getLaporanQuery(): Builder
+    public function getLaporanQuery(): Builder
     {
         $user = auth()->user();
 
@@ -50,6 +53,10 @@ class RiwayatPersetujuan extends Page
 
         if ($user->role === 'pic') {
             return $query->where('pic_id', $user->id);
+        }
+
+        if ($user->role === 'kabid_kabag') {
+            return $query->where('unit_id', $user->unit_id);
         }
 
         return $query->whereHas('persetujuan', function (Builder $query) use ($user) {

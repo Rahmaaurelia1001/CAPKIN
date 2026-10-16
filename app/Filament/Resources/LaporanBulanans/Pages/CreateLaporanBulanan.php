@@ -14,6 +14,19 @@ class CreateLaporanBulanan extends CreateRecord
 {
     protected static string $resource = LaporanBulananResource::class;
 
+    protected static ?string $title = 'Buat Laporan Bulanan Baru';
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(LaporanBulananResource::getUrl('index')),
+        ];
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Semua laporan baru dimulai dari draft.

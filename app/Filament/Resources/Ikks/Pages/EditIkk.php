@@ -13,6 +13,11 @@ class EditIkk extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(IkkResource::getUrl('index')),
             DeleteAction::make(),
         ];
     }

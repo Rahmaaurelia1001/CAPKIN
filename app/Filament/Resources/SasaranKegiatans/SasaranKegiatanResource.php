@@ -18,15 +18,19 @@ class SasaranKegiatanResource extends Resource
 {
     protected static ?string $model = SasaranKegiatan::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFlag;
 
     protected static ?string $recordTitleAttribute = 'nama';
-    
+
     protected static ?string $navigationLabel = 'Sasaran Kegiatan';
 
     protected static ?string $modelLabel = 'Sasaran Kegiatan';
 
     protected static ?string $pluralModelLabel = 'Sasaran Kegiatan';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
+
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {
@@ -40,17 +44,30 @@ class SasaranKegiatanResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListSasaranKegiatans::route('/'),
+            'index'  => ListSasaranKegiatans::route('/'),
             'create' => CreateSasaranKegiatan::route('/create'),
-            'edit' => EditSasaranKegiatan::route('/{record}/edit'),
+            'edit'   => EditSasaranKegiatan::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return auth()->user()?->role === 'admin';
     }
 }

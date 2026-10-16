@@ -25,9 +25,13 @@ class LaporanBulananResource extends Resource
     protected static ?string $modelLabel = 'Laporan Bulanan';
     protected static ?string $pluralModelLabel = 'Laporan Bulanan';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
     protected static ?string $recordTitleAttribute = 'bulan';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Pelaporan Kinerja';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -47,10 +51,10 @@ class LaporanBulananResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListLaporanBulanans::route('/'),
+            'index'  => ListLaporanBulanans::route('/'),
             'create' => CreateLaporanBulanan::route('/create'),
-            'edit' => EditLaporanBulanan::route('/{record}/edit'),
-            'view' => ViewLaporanBulanan::route('/{record}'),
+            'edit'   => EditLaporanBulanan::route('/{record}/edit'),
+            'view'   => ViewLaporanBulanan::route('/{record}'),
         ];
     }
 
@@ -78,92 +82,60 @@ class LaporanBulananResource extends Resource
             return false;
         }
 
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         if ($user->role === 'pic') {
             return (int) $record->pic_id === (int) $user->id;
         }
 
         if ($user->role === 'kabid_kabag') {
-            return (int) $record->unit_id === (int) $user->unit_id
-                && (int) $record->unit_id !== 6
-                && $record->status === 'diajukan';
+            return (int) $record->unit_id === (int) $user->unit_id;
         }
 
-        if ($user->role === 'katim_umper') {
-            return (int) $record->unit_id === 6
-                ? $record->status === 'diajukan'
-                : $record->status === 'disetujui_kabid';
-        }
-
-        if ($user->role === 'kabag_umum') {
-            return $record->status === 'disetujui_katim_umper';
-        }
-
-        if ($user->role === 'kapus') {
-            return in_array($record->status, [
-                'disetujui_kabag_umum',
-                'final',
-            ], true);
-        }
-
-        return false;
+        // katim_umper, kabag_umum, kapus boleh melihat semua laporan yang sudah diajukan
+        return in_array($user->role, ['katim_umper', 'kabag_umum', 'kapus'], true);
     }
 
     public static function canEdit(Model $record): bool
     {
         $user = auth()->user();
 
-        return $user?->role === 'pic'
-            && (int) $record->pic_id === (int) $user->id
+        if (! $user || $user->role !== 'pic') {
+            return false;
+        }
+
+        // PIC hanya bisa edit laporan miliknya sendiri yang masih draft atau perlu revisi
+        return (int) $record->pic_id === (int) $user->id
             && in_array($record->status, ['draft', 'perlu_revisi'], true);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
     }
 
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        $user = auth()->user();
+        $user  = auth()->user();
 
         if (! $user) {
-            return $query->whereRaw('1 = 0');
+            return $query->whereRaw('1=0');
         }
 
+        // PIC hanya melihat laporan milik sendiri
         if ($user->role === 'pic') {
             return $query->where('pic_id', $user->id);
         }
 
+        // Kabid hanya melihat laporan unit kerjanya
         if ($user->role === 'kabid_kabag') {
-            return $query
-                ->where('unit_id', $user->unit_id)
-                ->where('unit_id', '!=', 6)
-                ->where('status', 'diajukan');
+            return $query->where('unit_id', $user->unit_id);
         }
 
-        if ($user->role === 'katim_umper') {
-            return $query->where(function (Builder $query) {
-                $query
-                    ->where(function (Builder $query) {
-                        $query
-                            ->where('unit_id', 6)
-                            ->where('status', 'diajukan');
-                    })
-                    ->orWhere(function (Builder $query) {
-                        $query
-                            ->where('unit_id', '!=', 6)
-                            ->where('status', 'disetujui_kabid');
-                    });
-            });
-        }
-
-        if ($user->role === 'kabag_umum') {
-        return $query->where('status', 'disetujui_katim_umper');
-        }
-
-        if ($user->role === 'kapus') {
-            return $query->whereIn('status', [
-                'disetujui_kabag_umum',
-                'final',
-            ]);
-        }
-
-        return $query->whereRaw('1 = 0');
+        // katim_umper, kabag_umum, kapus, admin melihat semua
+        return $query;
     }
 }

@@ -8,6 +8,7 @@ use App\Filament\Resources\Ikks\Pages\ListIkks;
 use App\Filament\Resources\Ikks\Schemas\IkkForm;
 use App\Filament\Resources\Ikks\Tables\IkksTable;
 use App\Filament\Resources\Ikks\RelationManagers\PicsRelationManager;
+use App\Filament\Resources\Ikks\RelationManagers\UnitsRelationManager;
 use App\Models\Ikk;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -19,15 +20,19 @@ class IkkResource extends Resource
 {
     protected static ?string $model = Ikk::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
     protected static ?string $recordTitleAttribute = 'nama_ikk';
-    
-    protected static ?string $navigationLabel = 'IKK';
+
+    protected static ?string $navigationLabel = 'Master IKK';
 
     protected static ?string $modelLabel = 'IKK';
 
     protected static ?string $pluralModelLabel = 'IKK';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Master Data';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -41,19 +46,21 @@ class IkkResource extends Resource
 
     public static function getRelations(): array
     {
-    return [
-        PicsRelationManager::class,
-    ];
+        return [
+            UnitsRelationManager::class,
+            PicsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListIkks::route('/'),
+            'index'  => ListIkks::route('/'),
             'create' => CreateIkk::route('/create'),
-            'edit' => EditIkk::route('/{record}/edit'),
+            'edit'   => EditIkk::route('/{record}/edit'),
         ];
     }
+
     public static function canViewAny(): bool
     {
         return auth()->user()?->role === 'admin';

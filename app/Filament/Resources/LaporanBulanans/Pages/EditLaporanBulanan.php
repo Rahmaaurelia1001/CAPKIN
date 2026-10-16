@@ -14,6 +14,19 @@ class EditLaporanBulanan extends EditRecord
 {
     protected static string $resource = LaporanBulananResource::class;
 
+    protected static ?string $title = 'Ubah Laporan Bulanan';
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('kembali')
+                ->label('Kembali')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(LaporanBulananResource::getUrl('index')),
+        ];
+    }
+
 
     public function mount(int | string $record): void
     {

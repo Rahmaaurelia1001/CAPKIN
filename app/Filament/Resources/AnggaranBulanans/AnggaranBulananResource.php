@@ -18,9 +18,9 @@ class AnggaranBulananResource extends Resource
 {
     protected static ?string $model = AnggaranBulanan::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
-    protected static ?string $navigationLabel = 'Anggaran Bulanan';
+    protected static ?string $navigationLabel = 'Realisasi Anggaran';
 
     protected static ?string $modelLabel = 'Anggaran Bulanan';
 
@@ -28,9 +28,13 @@ class AnggaranBulananResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'ikk_id';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Pengelolaan Anggaran';
+
+    protected static ?int $navigationSort = 2;
+
     public static function canViewAny(): bool
     {
-        return auth()->user()?->role === 'katim_umper';
+        return in_array(auth()->user()?->role, ['katim_umper', 'admin'], true);
     }
 
     public static function canCreate(): bool
@@ -71,9 +75,9 @@ class AnggaranBulananResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListAnggaranBulanans::route('/'),
+            'index'  => ListAnggaranBulanans::route('/'),
             'create' => CreateAnggaranBulanan::route('/create'),
-            'edit' => EditAnggaranBulanan::route('/{record}/edit'),
+            'edit'   => EditAnggaranBulanan::route('/{record}/edit'),
         ];
     }
 }

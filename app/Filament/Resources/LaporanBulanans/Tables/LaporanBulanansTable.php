@@ -95,7 +95,13 @@ class LaporanBulanansTable
                         )
                     ),
 
-                EditAction::make(),
+                EditAction::make()
+                    ->label('Ubah')
+                    ->visible(fn (LaporanBulanan $record): bool =>
+                        auth()->user()?->role === 'pic'
+                        && (int) $record->pic_id === (int) auth()->id()
+                        && in_array($record->status, ['draft', 'perlu_revisi'], true)
+                    ),
 
                 Action::make('ajukan')
                     ->label('Ajukan Laporan')
