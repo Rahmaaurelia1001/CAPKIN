@@ -14,7 +14,7 @@ class DashboardCapaianIKK extends TableWidget
 {
     use InteractsWithPageFilters;
 
-    protected static ?string $heading = 'Rekap Capaian Kinerja & Pelaporan per IKK';
+    protected static ?string $heading = 'Daftar Indikator Kinerja (7 IKK)';
 
     protected static ?int $sort = 6;
 
@@ -35,12 +35,12 @@ class DashboardCapaianIKK extends TableWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('kode_ikk')
-                    ->label('Kode IKK')
-                    ->badge()
-                    ->color('gray')
+                    ->label('Kode')
+                    ->weight('bold')
+                    ->color('primary')
                     ->searchable()
                     ->sortable()
-                    ->width('100px'),
+                    ->width('90px'),
 
                 Tables\Columns\TextColumn::make('nama_ikk')
                     ->label('Nama Indikator Kinerja')
@@ -96,13 +96,25 @@ class DashboardCapaianIKK extends TableWidget
                     ->label('Laporan Masuk')
                     ->alignCenter()
                     ->state(function (Ikk $record) use ($tahun): string {
-                        $final   = LaporanBulanan::where('ikk_id', $record->id)
-                            ->where('tahun', $tahun)
-                            ->where('status', 'final')
-                            ->count();
-                        $total   = LaporanBulanan::where('ikk_id', $record->id)
-                            ->where('tahun', $tahun)
-                            ->count();
+                        static $countsCache = [];
+                        if (! isset($countsCache[$tahun])) {
+                            $records = LaporanBulanan::where('tahun', $tahun)
+                                ->selectRaw('ikk_id, status, count(*) as total')
+                                ->groupBy('ikk_id', 'status')
+                                ->get();
+                            
+                            $counts = [];
+                            foreach ($records as $row) {
+                                $counts[$row->ikk_id]['total'] = ($counts[$row->ikk_id]['total'] ?? 0) + $row->total;
+                                if ($row->status === 'final') {
+                                    $counts[$row->ikk_id]['final'] = ($counts[$row->ikk_id]['final'] ?? 0) + $row->total;
+                                }
+                            }
+                            $countsCache[$tahun] = $counts;
+                        }
+
+                        $final = $countsCache[$tahun][$record->id]['final'] ?? 0;
+                        $total = $countsCache[$tahun][$record->id]['total'] ?? 0;
                         return "{$final} final / {$total} total";
                     })
                     ->color('gray'),

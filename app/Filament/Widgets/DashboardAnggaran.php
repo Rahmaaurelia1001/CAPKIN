@@ -3,16 +3,27 @@
 namespace App\Filament\Widgets;
 
 use App\Services\AnggaranCalculator;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 
 class DashboardAnggaran extends ChartWidget
 {
     use InteractsWithPageFilters;
 
-    protected ?string $heading = 'Tren Penyerapan Anggaran Kumulatif';
+    public function getHeading(): string|Htmlable|null
+    {
+        return new HtmlString('
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span style="font-weight: 700;">Penyerapan Anggaran per Bulan</span>
+                <span style="font-size: 0.78rem; font-weight: 700; color: #dc2626;">Target 100%</span>
+            </div>
+        ');
+    }
 
-    protected ?string $description = 'Perkembangan realisasi dan penyerapan anggaran sepanjang tahun berjalan.';
+    protected ?string $description = 'Realisasi penyerapan anggaran kumulatif terhadap target 100%.';
 
     protected static ?int $sort = 5;
 
@@ -39,37 +50,47 @@ class DashboardAnggaran extends ChartWidget
         $calc = app(AnggaranCalculator::class);
         $tren = $calc->ambilTrenBulanan($tahun);
 
-        $labels            = [];
-        $dataPenyerapan    = [];
-        $dataRealisasiRp   = [];
-        $shortMonths       = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-                              'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        $shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+                        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-        foreach ($tren['labels'] as $idx => $label) {
-            $bulanNum = $idx + 1;
-            if ($bulanNum <= $bulanFilter) {
-                $labels[]          = $shortMonths[$idx] ?? $label;
-                $dataPenyerapan[]  = round($tren['persentase_penyerapan'][$idx] ?? 0, 1);
-                $dataRealisasiRp[] = round($tren['realisasi_nominal'][$idx] ?? 0, 0);
+        $labels         = [];
+        $dataPenyerapan = [];
+        $dataTarget     = [];
+
+        for ($b = 1; $b <= 12; $b++) {
+            $labels[]     = $shortMonths[$b - 1];
+            $dataTarget[] = 100;
+
+            if ($b <= $bulanFilter) {
+                $persen = $tren['persentase_penyerapan'][$b - 1] ?? 0;
+                $dataPenyerapan[] = round($persen, 1);
+            } else {
+                $dataPenyerapan[] = null;
             }
         }
 
         return [
             'datasets' => [
                 [
-                    'label'                => 'Penyerapan (%)',
-                    'data'                 => $dataPenyerapan,
-                    'type'                 => 'line',
-                    'fill'                 => true,
-                    'borderColor'          => '#0284c7',
-                    'backgroundColor'      => 'rgba(14, 165, 233, 0.12)',
-                    'tension'              => 0.4,
-                    'pointBackgroundColor' => '#0284c7',
-                    'pointBorderColor'     => '#ffffff',
-                    'pointHoverRadius'     => 7,
-                    'pointRadius'          => 5,
-                    'pointBorderWidth'     => 2,
-                    'yAxisID'              => 'y',
+                    'label'           => 'Penyerapan (%)',
+                    'data'            => $dataPenyerapan,
+                    'type'            => 'bar',
+                    'backgroundColor' => '#8b5cf6',
+                    'hoverBackgroundColor' => '#7c3aed',
+                    'borderRadius'    => 6,
+                    'borderSkipped'   => false,
+                    'barPercentage'   => 0.65,
+                ],
+                [
+                    'label'            => 'Target 100%',
+                    'data'             => $dataTarget,
+                    'type'             => 'line',
+                    'fill'             => false,
+                    'borderColor'      => '#ef4444',
+                    'borderWidth'      => 1.5,
+                    'borderDash'       => [5, 5],
+                    'pointRadius'      => 0,
+                    'pointHoverRadius' => 0,
                 ],
             ],
             'labels' => $labels,
@@ -78,56 +99,88 @@ class DashboardAnggaran extends ChartWidget
 
     protected function getType(): string
     {
-        return 'line';
+        return 'bar';
     }
 
-    protected function getOptions(): array
+    protected function getOptions(): RawJs
     {
-        return [
-            'plugins' => [
-                'legend' => [
-                    'display'  => true,
-                    'position' => 'top',
-                    'align'    => 'end',
-                ],
-                'tooltip' => [
-                    'mode'         => 'index',
-                    'intersect'    => false,
-                    'callbacks'    => [
-                        'label' => 'function(context) {
-                            return " Penyerapan: " + context.raw + "%";
-                        }',
-                    ],
-                    'backgroundColor' => 'rgba(15, 23, 42, 0.9)',
-                    'padding'         => 12,
-                    'cornerRadius'    => 8,
-                ],
-            ],
-            'scales' => [
-                'x' => [
-                    'grid'  => ['display' => false],
-                    'ticks' => ['font' => ['size' => 11]],
-                ],
-                'y' => [
-                    'beginAtZero' => true,
-                    'max'         => 100,
-                    'grid'        => ['color' => 'rgba(226, 232, 240, 0.5)'],
-                    'ticks'       => [
-                        'callback' => 'function(v) { return v + "%"; }',
-                        'stepSize' => 25,
-                    ],
-                    'position' => 'left',
-                ],
-            ],
-            'responsive'          => true,
-            'maintainAspectRatio' => false,
-            'animation'           => ['duration' => 800, 'easing' => 'easeInOutQuart'],
-            'interaction'         => ['mode' => 'nearest', 'axis' => 'x', 'intersect' => false],
-        ];
+        return RawJs::make(<<<JS
+        {
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        padding: 16,
+                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' }
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: '#ffffff',
+                    titleColor: '#0f172a',
+                    bodyColor: '#8b5cf6',
+                    borderColor: '#e2e8f0',
+                    borderWidth: 1,
+                    padding: { top: 10, bottom: 10, left: 14, right: 14 },
+                    cornerRadius: 10,
+                    displayColors: false,
+                    titleFont: { size: 13, weight: 'bold', family: 'Plus Jakarta Sans' },
+                    bodyFont: { size: 12, weight: '600', family: 'Plus Jakarta Sans' },
+                    boxPadding: 4,
+                    callbacks: {
+                        title: function(items) {
+                            return items[0].label;
+                        },
+                        label: function(item) {
+                            if (item.dataset.label === 'Target 100%') {
+                                return null;
+                            }
+                            var val = item.parsed.y;
+                            if (val === null || val === undefined) return null;
+                            return 'Penyerapan : ' + Number(val).toFixed(2) + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 11, family: 'Plus Jakarta Sans' },
+                        color: '#64748b'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        color: '#f1f5f9',
+                        borderDash: [4, 4]
+                    },
+                    ticks: {
+                        stepSize: 25,
+                        callback: function(v) { return v + '%'; },
+                        font: { size: 11, family: 'Plus Jakarta Sans' },
+                        color: '#64748b'
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+        JS);
     }
 
     protected function getMaxHeight(): ?string
     {
-        return '300px';
+        return '320px';
     }
 }

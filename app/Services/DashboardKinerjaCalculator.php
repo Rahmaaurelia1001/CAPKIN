@@ -11,19 +11,38 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardKinerjaCalculator
 {
+    private static array $cache = [];
+    private static ?\Illuminate\Support\Collection $sumberRealisasiCache = null;
+    private static array $targetCache = [];
+
+    public static function clearCache(): void
+    {
+        self::$cache = [];
+        self::$sumberRealisasiCache = null;
+        self::$targetCache = [];
+    }
    
     public function hitung(
         Ikk $ikk,
         int $bulan,
         int $tahun
     ): array {
-        $target = (float) TargetIkk::query()
-            ->where('tahun', $tahun)
-            ->whereHas(
-                'ikkPeriode',
-                fn ($query) => $query->where('ikk_id', $ikk->id)
-            )
-            ->value('nilai_target');
+        $cacheKey = "{$ikk->id}_{$bulan}_{$tahun}";
+        if (isset(self::$cache[$cacheKey])) {
+            return self::$cache[$cacheKey];
+        }
+
+        $targetKey = "{$ikk->id}_{$tahun}";
+        if (! array_key_exists($targetKey, self::$targetCache)) {
+            self::$targetCache[$targetKey] = (float) TargetIkk::query()
+                ->where('tahun', $tahun)
+                ->whereHas(
+                    'ikkPeriode',
+                    fn ($query) => $query->where('ikk_id', $ikk->id)
+                )
+                ->value('nilai_target');
+        }
+        $target = self::$targetCache[$targetKey];
 
         $adaLaporanFinal = $this->laporanFinal($bulan, $tahun)
             ->where('ikk_id', $ikk->id)
@@ -36,7 +55,7 @@ class DashboardKinerjaCalculator
                 $tahun
             );
 
-            return [
+            return self::$cache[$cacheKey] = [
                 'target' => $target,
                 'realisasi_kumulatif' => $capaian,
                 'capaian_kumulatif' => $capaian,
@@ -50,7 +69,7 @@ class DashboardKinerjaCalculator
             $tahun
         );
 
-        return [
+        return self::$cache[$cacheKey] = [
             'target' => $target,
             'realisasi_kumulatif' => $realisasi,
             'capaian_kumulatif' => $target > 0
@@ -71,9 +90,10 @@ class DashboardKinerjaCalculator
    
     private function hitungRealisasi(int $ikkId, int $bulan, int $tahun): float
     {
-        $sumber = IkkSumberRealisasi::query()
-            ->where('ikk_id', $ikkId)
-            ->first();
+        if (self::$sumberRealisasiCache === null) {
+            self::$sumberRealisasiCache = IkkSumberRealisasi::all()->keyBy('ikk_id');
+        }
+        $sumber = self::$sumberRealisasiCache->get($ikkId);
 
         if (! $sumber) {
             return 0;

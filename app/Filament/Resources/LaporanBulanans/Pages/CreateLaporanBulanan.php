@@ -5,10 +5,12 @@ namespace App\Filament\Resources\LaporanBulanans\Pages;
 use App\Filament\Resources\LaporanBulanans\LaporanBulananResource;
 use App\Models\AngkaKinerja;
 use App\Models\IkkKomponen;
+use App\Models\LaporanBulanan;
 use App\Models\RincianKerjasama;
 use App\Models\RincianNSPK;
 use App\Models\RincianPelatihan;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Validation\ValidationException;
 
 class CreateLaporanBulanan extends CreateRecord
 {
@@ -25,6 +27,35 @@ class CreateLaporanBulanan extends CreateRecord
                 ->color('gray')
                 ->url(LaporanBulananResource::getUrl('index')),
         ];
+    }
+
+    protected function beforeCreate(): void
+    {
+        $ikkId  = $this->data['ikk_id'] ?? null;
+        $unitId = auth()->user()?->role === 'pic' ? auth()->user()->unit_id : ($this->data['unit_id'] ?? null);
+        $bulan  = $this->data['bulan'] ?? null;
+        $tahun  = $this->data['tahun'] ?? null;
+
+        if ($ikkId && $unitId && $bulan && $tahun) {
+            $existing = LaporanBulanan::query()
+                ->where('ikk_id', $ikkId)
+                ->where('unit_id', $unitId)
+                ->where('bulan', $bulan)
+                ->where('tahun', $tahun)
+                ->exists();
+
+            if ($existing) {
+                $namaBulan = [
+                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+                ][$bulan] ?? $bulan;
+
+                throw ValidationException::withMessages([
+                    'bulan' => "Laporan untuk indikator ini pada unit Anda periode {$namaBulan} {$tahun} sudah pernah dibuat. Tidak dapat membuat laporan ganda untuk periode yang sama.",
+                ]);
+            }
+        }
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

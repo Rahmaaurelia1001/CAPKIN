@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\LaporanBulanans\Schemas;
 
 use App\Models\Ikk;
+use App\Models\LaporanBulanan;
 use App\Models\TargetIkk;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -97,6 +98,35 @@ class LaporanBulananForm
                         11 => 'November',
                         12 => 'Desember',
                     ])
+                    ->rules([
+                        fn (Get $get, ?\Illuminate\Database\Eloquent\Model $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                            $ikkId = $get('ikk_id');
+                            $tahun = $get('tahun');
+                            $unitId = auth()->user()?->role === 'pic' ? auth()->user()->unit_id : $get('unit_id');
+
+                            if ($ikkId && $unitId && $value && $tahun) {
+                                $query = LaporanBulanan::query()
+                                    ->where('ikk_id', $ikkId)
+                                    ->where('unit_id', $unitId)
+                                    ->where('bulan', $value)
+                                    ->where('tahun', $tahun);
+
+                                if ($record && $record->exists) {
+                                    $query->where('id', '!=', $record->id);
+                                }
+
+                                if ($query->exists()) {
+                                    $namaBulan = [
+                                        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+                                    ][$value] ?? $value;
+
+                                    $fail("Laporan untuk indikator ini pada unit Anda periode {$namaBulan} {$tahun} sudah pernah dibuat. Tidak diperbolehkan membuat laporan ganda.");
+                                }
+                            }
+                        },
+                    ])
                     ->required(),
 
                 TextInput::make('tahun')
@@ -129,6 +159,7 @@ class LaporanBulananForm
                             ->numeric()
                             ->integer()
                             ->minValue(0)
+                            ->live(onBlur: true)
                             ->required(),
 
                         TextInput::make('jumlah_lulus')
@@ -136,6 +167,14 @@ class LaporanBulananForm
                             ->numeric()
                             ->integer()
                             ->minValue(0)
+                            ->rules([
+                                fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    $peserta = (int) $get('jumlah_peserta');
+                                    if ((int) $value > $peserta) {
+                                        $fail("Jumlah lulus ({$value}) tidak boleh melebihi jumlah peserta ({$peserta}).");
+                                    }
+                                },
+                            ])
                             ->required(),
 
                         TextInput::make('jumlah_laki_laki')

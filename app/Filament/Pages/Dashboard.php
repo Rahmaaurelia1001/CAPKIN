@@ -17,7 +17,18 @@ class Dashboard extends BaseDashboard
 {
     use HasFiltersForm;
 
-    protected static ?string $title = 'Dashboard Monitoring Kinerja & Anggaran';
+    public function getTitle(): string
+    {
+        return auth()->user()?->role === 'kapus'
+            ? 'Dashboard Pimpinan'
+            : 'Dashboard Monitoring Kinerja & Anggaran';
+    }
+
+    public function getSubheading(): ?string
+    {
+        $tahun = $this->filters['tahun'] ?? now()->year;
+        return "Monitoring Capaian Kinerja dan Realisasi Anggaran — Tahun Anggaran {$tahun}";
+    }
 
     public function mount(): void
     {
@@ -39,30 +50,39 @@ class Dashboard extends BaseDashboard
     public function filtersForm(Schema $schema): Schema
     {
         return $schema
+            ->columns(2)
             ->components([
                 Select::make('tahun')
-                    ->label('Filter Periode Tahun')
-                    ->options([
-                        2025 => 'Tahun 2025',
-                        2026 => 'Tahun 2026',
-                    ])
-                    ->default(2026),
+                    ->label('Tahun Anggaran')
+                    ->options(function () {
+                        $currentYear = (int) now()->year;
+                        $years = \App\Models\TargetIkk::distinct()->pluck('tahun')
+                            ->merge(\App\Models\PaguAnggaran::distinct()->pluck('tahun'))
+                            ->merge(\App\Models\LaporanBulanan::distinct()->pluck('tahun'))
+                            ->push($currentYear)
+                            ->unique()
+                            ->sortDesc()
+                            ->values();
+
+                        return $years->mapWithKeys(fn ($y) => [$y => "Tahun {$y}"])->all();
+                    })
+                    ->default((int) now()->year),
 
                 Select::make('bulan')
-                    ->label('Filter Sampai Bulan')
+                    ->label('Periode')
                     ->options([
-                        1 => 'Januari',
-                        2 => 'Februari',
-                        3 => 'Maret',
-                        4 => 'April',
-                        5 => 'Mei',
-                        6 => 'Juni',
-                        7 => 'Juli',
-                        8 => 'Agustus',
-                        9 => 'September',
-                        10 => 'Oktober',
-                        11 => 'November',
-                        12 => 'Desember',
+                        1 => 's.d. Januari',
+                        2 => 's.d. Februari',
+                        3 => 's.d. Maret',
+                        4 => 's.d. April',
+                        5 => 's.d. Mei',
+                        6 => 's.d. Juni',
+                        7 => 's.d. Juli',
+                        8 => 's.d. Agustus',
+                        9 => 's.d. September',
+                        10 => 's.d. Oktober',
+                        11 => 's.d. November',
+                        12 => 's.d. Desember',
                     ])
                     ->default((int) now()->month),
             ]);
@@ -74,19 +94,20 @@ class Dashboard extends BaseDashboard
 
         return match ($role) {
             'kapus' => [
-                DashboardRingkasan::class,      // sort 1: stats cards
-                DashboardAnggaranPie::class,    // sort 3: donut chart
-                DashboardAnggaran::class,       // sort 5: tren line chart
-                DashboardKinerjaKapus::class,   // sort 4: capaian bar chart per IKK
-                DashboardAnggaranPerIKK::class, // sort 7: pagu vs realisasi per IKK
-                DashboardCapaianIKK::class,     // sort 6: rekap tabel IKK
+                DashboardRingkasan::class,      // sort 1: 4 stats cards (Total Indikator, Realisasi Kinerja, Realisasi Anggaran, Penyerapan)
+                DashboardKinerjaKapus::class,   // sort 2 (left): Tren Capaian Kinerja (Rata-rata) Line Chart
+                DashboardAnggaran::class,       // sort 3 (right): Penyerapan Anggaran per Bulan Bar Chart
+                DashboardCapaianIKK::class,     // sort 4: Daftar Indikator Kinerja (7 IKK) Table
+                DashboardAnggaranPie::class,    // sort 5: Ringkasan Anggaran Donut
+                DashboardAnggaranPerIKK::class, // sort 6: Pagu vs Realisasi per IKK
             ],
 
             'katim_umper', 'kabag_umum' => [
                 DashboardRingkasan::class,
-                DashboardAnggaranPie::class,
-                DashboardAnggaran::class,
                 DashboardKinerjaKapus::class,
+                DashboardAnggaran::class,
+                DashboardCapaianIKK::class,
+                DashboardAnggaranPie::class,
                 DashboardAnggaranPerIKK::class,
             ],
 
@@ -104,7 +125,6 @@ class Dashboard extends BaseDashboard
             'default' => 1,
             'md'      => 2,
             'xl'      => 2,
-            '2xl'     => 3,
         ];
     }
 }

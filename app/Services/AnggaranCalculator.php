@@ -10,11 +10,25 @@ use Illuminate\Support\Collection;
 
 class AnggaranCalculator
 {
+    private static array $paguCache = [];
+    private static array $realisasiCache = [];
+
+    public static function clearCache(): void
+    {
+        self::$paguCache = [];
+        self::$realisasiCache = [];
+    }
+
     /**
      * Mengambil pagu aktif/terakhir yang berlaku untuk setiap IKK pada periode bulan & tahun tertentu.
      */
     public function ambilPaguPerIkk(int $tahun, int $bulan = 12, ?int $unitId = null): Collection
     {
+        $key = "{$tahun}_{$bulan}_" . ($unitId ?? 'all');
+        if (isset(self::$paguCache[$key])) {
+            return self::$paguCache[$key];
+        }
+
         $query = PaguAnggaran::query()
             ->with('ikk:id,kode_ikk,nama_ikk,is_active')
             ->where('tahun', $tahun)
@@ -29,7 +43,7 @@ class AnggaranCalculator
             ->orderByDesc('berlaku_mulai_bulan')
             ->orderByDesc('nomor_revisi');
 
-        return $query->get()->unique('ikk_id')->keyBy('ikk_id');
+        return self::$paguCache[$key] = $query->get()->unique('ikk_id')->keyBy('ikk_id');
     }
 
     /**
@@ -45,6 +59,11 @@ class AnggaranCalculator
      */
     public function ambilRealisasiPerIkk(int $tahun, int $bulan = 12, ?int $unitId = null): Collection
     {
+        $key = "{$tahun}_{$bulan}_" . ($unitId ?? 'all');
+        if (isset(self::$realisasiCache[$key])) {
+            return self::$realisasiCache[$key];
+        }
+
         $query = AnggaranBulanan::query()
             ->where('tahun', $tahun)
             ->where('bulan', '<=', $bulan)
@@ -57,7 +76,7 @@ class AnggaranCalculator
             ->orderBy('ikk_id')
             ->orderByDesc('bulan');
 
-        return $query->get()->unique('ikk_id')->keyBy('ikk_id');
+        return self::$realisasiCache[$key] = $query->get()->unique('ikk_id')->keyBy('ikk_id');
     }
 
     /**

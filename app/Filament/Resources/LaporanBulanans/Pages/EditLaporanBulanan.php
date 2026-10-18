@@ -5,10 +5,12 @@ namespace App\Filament\Resources\LaporanBulanans\Pages;
 use App\Filament\Resources\LaporanBulanans\LaporanBulananResource;
 use App\Models\AngkaKinerja;
 use App\Models\IkkKomponen;
+use App\Models\LaporanBulanan;
 use App\Models\RincianKerjasama;
 use App\Models\RincianNSPK;
 use App\Models\RincianPelatihan;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Validation\ValidationException;
 
 class EditLaporanBulanan extends EditRecord
 {
@@ -44,6 +46,36 @@ class EditLaporanBulanan extends EditRecord
             ),
         403
         );
+    }
+
+    protected function beforeSave(): void
+    {
+        $ikkId  = $this->data['ikk_id'] ?? $this->record->ikk_id;
+        $unitId = $this->record->unit_id;
+        $bulan  = $this->data['bulan'] ?? $this->record->bulan;
+        $tahun  = $this->data['tahun'] ?? $this->record->tahun;
+
+        if ($ikkId && $unitId && $bulan && $tahun) {
+            $existing = LaporanBulanan::query()
+                ->where('id', '!=', $this->record->id)
+                ->where('ikk_id', $ikkId)
+                ->where('unit_id', $unitId)
+                ->where('bulan', $bulan)
+                ->where('tahun', $tahun)
+                ->exists();
+
+            if ($existing) {
+                $namaBulan = [
+                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+                ][$bulan] ?? $bulan;
+
+                throw ValidationException::withMessages([
+                    'bulan' => "Laporan untuk indikator ini pada unit Anda periode {$namaBulan} {$tahun} sudah ada pada laporan lain. Periode tidak boleh duplikat.",
+                ]);
+            }
+        }
     }
 
     protected function mutateFormDataBeforeFill(array $data): array

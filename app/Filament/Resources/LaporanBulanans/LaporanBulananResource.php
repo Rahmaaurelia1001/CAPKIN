@@ -21,17 +21,87 @@ use Illuminate\Database\Eloquent\Model;
 class LaporanBulananResource extends Resource
 {
     protected static ?string $model = LaporanBulanan::class;
-    protected static ?string $navigationLabel = 'Laporan Bulanan';
     protected static ?string $modelLabel = 'Laporan Bulanan';
     protected static ?string $pluralModelLabel = 'Laporan Bulanan';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
-
     protected static ?string $recordTitleAttribute = 'bulan';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Pelaporan Kinerja';
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationLabel(): string
+    {
+        $role = auth()->user()?->role;
+
+        if ($role === 'pic') {
+            return 'Laporan Saya';
+        }
+
+        if (in_array($role, ['kabid_kabag', 'katim_umper', 'kabag_umum', 'kapus'], true)) {
+            return 'Approval Masuk';
+        }
+
+        return 'Laporan Bulanan';
+    }
+
+    public static function getNavigationIcon(): string|\BackedEnum|null
+    {
+        $role = auth()->user()?->role;
+
+        if ($role === 'pic') {
+            return Heroicon::OutlinedDocumentText;
+        }
+
+        if (in_array($role, ['kabid_kabag', 'katim_umper', 'kabag_umum', 'kapus'], true)) {
+            return Heroicon::OutlinedInboxArrowDown;
+        }
+
+        return Heroicon::OutlinedDocumentText;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return null;
+        }
+
+        if (in_array($user->role, ['kabid_kabag', 'katim_umper', 'kabag_umum', 'kapus'], true)) {
+            $query = LaporanBulanan::query();
+            $filtered = match ($user->role) {
+                'kabid_kabag' => $query->where('status', 'diajukan')
+                    ->where('unit_id', $user->unit_id)
+                    ->where('unit_id', '!=', 6),
+                'katim_umper' => $query->where(function (Builder $q) {
+                    $q->where(fn (Builder $q2) => $q2->where('status', 'diajukan')->where('unit_id', 6))
+                      ->orWhere('status', 'disetujui_kabid');
+                }),
+                'kabag_umum' => $query->where('status', 'disetujui_katim_umper'),
+                'kapus' => $query->where('status', 'disetujui_kabag_umum'),
+                default => $query,
+            };
+
+            $count = $filtered->count();
+
+            return $count > 0 ? (string) $count : null;
+        }
+
+        if ($user->role === 'pic') {
+            $countRevisi = LaporanBulanan::where('pic_id', $user->id)
+                ->where('status', 'perlu_revisi')
+                ->count();
+
+            return $countRevisi > 0 ? (string) $countRevisi : null;
+        }
+
+        return null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return auth()->user()?->role === 'pic' ? 'danger' : 'warning';
+    }
 
     public static function form(Schema $schema): Schema
     {

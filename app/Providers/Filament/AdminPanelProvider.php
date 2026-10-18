@@ -28,10 +28,12 @@ class AdminPanelProvider extends PanelProvider
             ->path('app')
             ->login()
             ->profile()
-            ->brandName('CAPKIN PPSDMAP')
+            ->brandName('PPSDMAP')
+            ->brandLogo(fn () => view('filament.components.brand-logo'))
+            ->brandLogoHeight('2rem')
             ->font('Plus Jakarta Sans')
             ->colors([
-                'primary' => Color::Sky,
+                'primary' => Color::Blue,
                 'gray'    => Color::Slate,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
@@ -45,30 +47,58 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): string => '<style>
-                    /* ── Google Font ── */
-                    @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+                    /* ── Brand Logo & Header Fix ── */
+                    .fi-logo {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        max-height: 36px !important;
+                        overflow: hidden !important;
+                    }
+                    .fi-logo svg, .fi-logo img {
+                        max-height: 28px !important;
+                        width: auto !important;
+                    }
+                    .fi-sidebar-header {
+                        height: 56px !important;
+                        min-height: 56px !important;
+                        max-height: 56px !important;
+                        padding: 0 16px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        border-bottom: 1px solid #e2e8f0 !important;
+                    }
+                    .fi-topbar {
+                        height: 56px !important;
+                    }
+
+                    /* Sembunyikan duplikasi logo di topbar pada desktop jika sidebar terbuka */
+                    @media (min-width: 1024px) {
+                        .fi-topbar .fi-logo {
+                            display: none !important;
+                        }
+                    }
 
                     /* ── Light Mode ── */
                     html:not(.dark) body {
-                        background-color: #f0f6ff !important;
+                        background-color: #f8fafc !important;
                     }
                     html:not(.dark) .fi-sidebar {
-                        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+                        background-color: #ffffff !important;
                         border-right: 1px solid #e2e8f0 !important;
-                        box-shadow: 2px 0 12px rgba(14,165,233,0.06) !important;
+                        box-shadow: none !important;
                     }
                     html:not(.dark) .fi-sidebar-item-active > a,
                     html:not(.dark) .fi-sidebar-item-active > button {
-                        background: linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%) !important;
-                        color: #0369a1 !important;
-                        border-radius: 0.625rem !important;
-                        font-weight: 700 !important;
-                        border-left: 3px solid #0284c7 !important;
+                        background-color: #eff6ff !important;
+                        color: #1d4ed8 !important;
+                        border-radius: 0.5rem !important;
+                        font-weight: 600 !important;
+                        border-left: 3px solid #1d4ed8 !important;
                     }
                     html:not(.dark) .fi-topbar {
-                        background: linear-gradient(90deg, #ffffff 0%, #f8fafc 100%) !important;
+                        background-color: #ffffff !important;
                         border-bottom: 1px solid #e2e8f0 !important;
-                        box-shadow: 0 2px 10px rgba(14,165,233,0.06) !important;
+                        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
                     }
                     /* Cards & tables */
                     html:not(.dark) .fi-section,
@@ -77,20 +107,20 @@ class AdminPanelProvider extends PanelProvider
                     html:not(.dark) .fi-wi-table-wrapper,
                     html:not(.dark) .fi-ta-ctn {
                         background-color: #ffffff !important;
-                        border: 1px solid #e8f0fe !important;
-                        box-shadow: 0 2px 8px rgba(14,165,233,0.06), 0 1px 2px rgba(0,0,0,0.04) !important;
-                        border-radius: 1rem !important;
+                        border: 1px solid #e2e8f0 !important;
+                        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05) !important;
+                        border-radius: 0.75rem !important;
                     }
                     html:not(.dark) .fi-ta-header-cell {
-                        background-color: #f0f9ff !important;
-                        font-size: 0.72rem !important;
-                        font-weight: 700 !important;
+                        background-color: #f8fafc !important;
+                        font-size: 0.75rem !important;
+                        font-weight: 600 !important;
                         text-transform: uppercase !important;
-                        letter-spacing: 0.06em !important;
-                        color: #0369a1 !important;
+                        letter-spacing: 0.05em !important;
+                        color: #475569 !important;
                     }
                     html:not(.dark) .fi-ta-row:hover td {
-                        background-color: #f0f9ff !important;
+                        background-color: #f8fafc !important;
                     }
 
                     /* ── Dark Mode ── */

@@ -34,7 +34,12 @@ class AnggaranBulananResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return in_array(auth()->user()?->role, ['katim_umper', 'admin'], true);
+        return auth()->user()?->role === 'katim_umper';
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->role === 'katim_umper';
     }
 
     public static function canCreate(): bool

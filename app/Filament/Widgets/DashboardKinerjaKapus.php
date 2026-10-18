@@ -4,20 +4,35 @@ namespace App\Filament\Widgets;
 
 use App\Models\Ikk;
 use App\Services\DashboardKinerjaCalculator;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 
 class DashboardKinerjaKapus extends ChartWidget
 {
     use InteractsWithPageFilters;
 
-    protected ?string $heading = 'Capaian Kinerja per IKK';
+    public function getHeading(): string|Htmlable|null
+    {
+        return new HtmlString('
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span style="font-weight: 700;">Tren Capaian Kinerja (Rata-rata)</span>
+                <span style="font-size: 0.78rem; font-weight: 700; color: #dc2626;">Target 100%</span>
+            </div>
+        ');
+    }
 
-    protected ?string $description = 'Perbandingan capaian kumulatif terhadap target tahunan masing-masing indikator kinerja.';
+    protected ?string $description = 'Perkembangan rata-rata capaian kinerja kumulatif terhadap target tahunan 100%.';
 
     protected static ?int $sort = 4;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = [
+        'default' => 1,
+        'md'      => 1,
+        'xl'      => 1,
+    ];
 
     public static function canView(): bool
     {
@@ -30,60 +45,70 @@ class DashboardKinerjaKapus extends ChartWidget
 
     protected function getData(): array
     {
-        $tahun  = (int) ($this->filters['tahun'] ?? now()->year);
-        $bulan  = (int) ($this->filters['bulan'] ?? now()->month);
+        $tahun       = (int) ($this->filters['tahun'] ?? now()->year);
+        $bulanFilter = (int) ($this->filters['bulan'] ?? now()->month);
 
         $kinerjaCalc = app(DashboardKinerjaCalculator::class);
-        $ikks        = Ikk::where('is_active', true)->orderBy('kode_ikk')->get();
+        $ikks        = Ikk::where('is_active', true)->get();
+
+        $shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+                        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
         $labels          = [];
         $dataCapaian     = [];
         $dataTarget      = [];
-        $warnaCapaian    = [];
 
-        foreach ($ikks as $ikk) {
-            $hasil = $kinerjaCalc->hitung($ikk, $bulan, $tahun);
-
-            $labels[] = $ikk->kode_ikk;
-
-            // Capaian kumulatif (0 jika belum ada)
-            $capaian = $hasil['ada_laporan_final'] ? (float) $hasil['capaian_kumulatif'] : 0;
-            $dataCapaian[] = round($capaian, 1);
-
-            // Target selalu 100% (sudah dalam persen capaian)
+        for ($b = 1; $b <= 12; $b++) {
+            $labels[]     = $shortMonths[$b - 1];
             $dataTarget[] = 100;
 
-            // Warna berdasarkan ketercapaian
-            $warnaCapaian[] = match (true) {
-                !$hasil['ada_laporan_final'] => 'rgba(148, 163, 184, 0.6)', // Abu-abu — belum ada data
-                $capaian >= 100             => 'rgba(34, 197, 94, 0.8)',    // Hijau — tercapai
-                $capaian >= 70              => 'rgba(14, 165, 233, 0.8)',   // Biru — on track
-                default                     => 'rgba(251, 191, 36, 0.8)',   // Kuning — perlu perhatian
-            };
+            if ($b <= $bulanFilter) {
+                $totalCapaian   = 0;
+                $jumlahDihitung = 0;
+
+                foreach ($ikks as $ikk) {
+                    $hasil = $kinerjaCalc->hitung($ikk, $b, $tahun);
+                    if ($hasil['ada_laporan_final'] ?? false) {
+                        $totalCapaian += (float) $hasil['capaian_kumulatif'];
+                        $jumlahDihitung++;
+                    }
+                }
+
+                $avg = $jumlahDihitung > 0 ? round($totalCapaian / $jumlahDihitung, 1) : null;
+                $dataCapaian[] = $avg;
+            } else {
+                $dataCapaian[] = null;
+            }
         }
 
         return [
             'datasets' => [
                 [
-                    'label'           => 'Target (%)',
-                    'data'            => $dataTarget,
-                    'backgroundColor' => 'rgba(226, 232, 240, 0.4)',
-                    'borderColor'     => '#cbd5e1',
-                    'borderWidth'     => 1,
-                    'borderRadius'    => 4,
-                    'borderSkipped'   => false,
+                    'label'                => 'Realisasi Kinerja',
+                    'data'                 => $dataCapaian,
+                    'type'                 => 'line',
+                    'fill'                 => false,
+                    'borderColor'          => '#2563eb',
+                    'backgroundColor'      => '#2563eb',
+                    'borderWidth'          => 2.5,
+                    'tension'              => 0.35,
+                    'pointBackgroundColor' => '#2563eb',
+                    'pointBorderColor'     => '#ffffff',
+                    'pointHoverRadius'     => 7,
+                    'pointRadius'          => 5,
+                    'pointBorderWidth'     => 2,
+                    'spanGaps'             => false,
                 ],
                 [
-                    'label'           => 'Capaian (%)',
-                    'data'            => $dataCapaian,
-                    'backgroundColor' => $warnaCapaian,
-                    'borderColor'     => array_map(
-                        fn ($c) => str_replace('0.8', '1', str_replace('0.6', '1', $c)),
-                        $warnaCapaian
-                    ),
-                    'borderWidth'     => 1,
-                    'borderRadius'    => 4,
-                    'borderSkipped'   => false,
+                    'label'                => 'Target 100%',
+                    'data'                 => $dataTarget,
+                    'type'                 => 'line',
+                    'fill'                 => false,
+                    'borderColor'          => '#ef4444',
+                    'borderWidth'          => 1.5,
+                    'borderDash'           => [5, 5],
+                    'pointRadius'          => 0,
+                    'pointHoverRadius'     => 0,
                 ],
             ],
             'labels' => $labels,
@@ -92,74 +117,88 @@ class DashboardKinerjaKapus extends ChartWidget
 
     protected function getType(): string
     {
-        return 'bar';
+        return 'line';
     }
 
-    protected function getOptions(): array
+    protected function getOptions(): RawJs
     {
-        return [
-            'plugins' => [
-                'legend' => [
-                    'display'  => true,
-                    'position' => 'top',
-                    'align'    => 'end',
-                    'labels'   => [
-                        'usePointStyle' => true,
-                        'pointStyle'    => 'circle',
-                        'boxWidth'      => 8,
-                        'padding'       => 16,
-                    ],
-                ],
-                'tooltip' => [
-                    'callbacks' => [
-                        'label' => 'function(context) {
-                            var val = context.raw;
-                            return context.dataset.label + ": " + val + "%";
-                        }',
-                        'afterBody' => 'function(context) {
-                            if (context[0] && context[0].datasetIndex === 1) {
-                                var val = context[0].raw;
-                                if (val === 0) return ["Status: Belum ada laporan final"];
-                                if (val >= 100) return ["Status: ✅ Target Tercapai"];
-                                if (val >= 70) return ["Status: 🔵 On Track"];
-                                return ["Status: ⚠️ Perlu Perhatian"];
+        return RawJs::make(<<<JS
+        {
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        padding: 16,
+                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' }
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: '#ffffff',
+                    titleColor: '#0f172a',
+                    bodyColor: '#2563eb',
+                    borderColor: '#e2e8f0',
+                    borderWidth: 1,
+                    padding: { top: 10, bottom: 10, left: 14, right: 14 },
+                    cornerRadius: 10,
+                    displayColors: false,
+                    titleFont: { size: 13, weight: 'bold', family: 'Plus Jakarta Sans' },
+                    bodyFont: { size: 12, weight: '600', family: 'Plus Jakarta Sans' },
+                    boxPadding: 4,
+                    callbacks: {
+                        title: function(items) {
+                            return items[0].label;
+                        },
+                        label: function(item) {
+                            if (item.dataset.label === 'Target 100%') {
+                                return null;
                             }
-                            return [];
-                        }',
-                    ],
-                    'backgroundColor' => 'rgba(15, 23, 42, 0.9)',
-                    'padding'         => 12,
-                    'cornerRadius'    => 8,
-                ],
-            ],
-            'scales' => [
-                'x' => [
-                    'grid' => ['display' => false],
-                    'ticks' => [
-                        'font' => ['size' => 11, 'weight' => '600'],
-                    ],
-                ],
-                'y' => [
-                    'beginAtZero' => true,
-                    'max'         => 110,
-                    'grid'        => ['color' => 'rgba(226, 232, 240, 0.5)'],
-                    'ticks'       => [
-                        'callback' => 'function(value) { return value + "%"; }',
-                        'stepSize' => 20,
-                    ],
-                ],
-            ],
-            'responsive'          => true,
-            'maintainAspectRatio' => false,
-            'animation'           => [
-                'duration' => 800,
-                'easing'   => 'easeInOutQuart',
-            ],
-        ];
+                            var val = item.parsed.y;
+                            if (val === null || val === undefined) return null;
+                            return 'Realisasi : ' + Number(val).toFixed(2) + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 11, family: 'Plus Jakarta Sans' },
+                        color: '#64748b'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        color: '#f1f5f9',
+                        borderDash: [4, 4]
+                    },
+                    ticks: {
+                        stepSize: 25,
+                        callback: function(v) { return v + '%'; },
+                        font: { size: 11, family: 'Plus Jakarta Sans' },
+                        color: '#64748b'
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+        JS);
     }
 
     protected function getMaxHeight(): ?string
     {
-        return '380px';
+        return '320px';
     }
 }

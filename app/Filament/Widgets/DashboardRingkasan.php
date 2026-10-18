@@ -38,53 +38,38 @@ class DashboardRingkasan extends StatsOverviewWidget
             $laporan->where('unit_id', $user->unit_id);
         }
 
-        $jumlahIkkAktif    = Ikk::where('is_active', true)->count();
-        $jumlahFinal       = (clone $laporan)->where('status', 'final')->count();
+        $jumlahDraft       = (clone $laporan)->where('status', 'draft')->count();
         $jumlahDalamProses = (clone $laporan)->whereIn('status', [
             'diajukan', 'disetujui_kabid', 'disetujui_katim_umper', 'disetujui_kabag_umum',
         ])->count();
         $jumlahPerluRevisi = (clone $laporan)->where('status', 'perlu_revisi')->count();
+        $jumlahFinal       = (clone $laporan)->where('status', 'final')->count();
 
         $laporanUrl = \App\Filament\Resources\LaporanBulanans\LaporanBulananResource::getUrl('index');
 
-        // Sparkline: laporan final per bulan sepanjang tahun
-        $finalPerBulan = LaporanBulanan::query()
-            ->where('tahun', $tahun)
-            ->where('status', 'final')
-            ->when($user?->role === 'pic', fn ($q) => $q->where('pic_id', $user->id))
-            ->when($user?->role === 'kabid_kabag', fn ($q) => $q->where('unit_id', $user->unit_id))
-            ->selectRaw('bulan, COUNT(*) as total')
-            ->groupBy('bulan')
-            ->pluck('total', 'bulan');
-
-        $sparklineFinal = array_map(
-            fn ($b) => (int) ($finalPerBulan[$b] ?? 0),
-            range(1, $bulan)
-        );
-
         return [
-            Stat::make('Total IKK Aktif', $jumlahIkkAktif . ' Indikator')
-                ->description('IKK yang dipantau tahun ' . $tahun)
-                ->descriptionIcon('heroicon-m-rectangle-group')
-                ->color('info'),
-
-            Stat::make('Laporan Terverifikasi', $jumlahFinal . ' Laporan')
-                ->description('Status final & disetujui Kapus')
-                ->descriptionIcon('heroicon-m-check-badge')
-                ->color('success')
-                ->chart($sparklineFinal)
+            Stat::make('Draf', $jumlahDraft . ' Laporan')
+                ->description('Laporan belum diajukan')
+                ->descriptionIcon('heroicon-m-pencil-square')
+                ->color('gray')
                 ->url($laporanUrl),
 
-            Stat::make('Dalam Proses Persetujuan', $jumlahDalamProses . ' Laporan')
-                ->description('Menunggu persetujuan berjenjang')
+            Stat::make('Menunggu', $jumlahDalamProses . ' Laporan')
+                ->description('Menunggu persetujuan pejabat')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color($jumlahDalamProses > 0 ? 'warning' : 'gray')
                 ->url($laporanUrl),
 
-            Stat::make('Perlu Tindak Lanjut', $jumlahPerluRevisi . ' Laporan')
-                ->description($jumlahPerluRevisi > 0 ? 'Ada laporan perlu diperbaiki segera' : 'Semua laporan dalam kondisi baik')
+            Stat::make('Ditolak / Revisi', $jumlahPerluRevisi . ' Laporan')
+                ->description($jumlahPerluRevisi > 0 ? 'Perlu perbaikan segera' : 'Tidak ada laporan ditolak')
                 ->descriptionIcon($jumlahPerluRevisi > 0 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
                 ->color($jumlahPerluRevisi > 0 ? 'danger' : 'gray')
+                ->url($laporanUrl),
+
+            Stat::make('Final', $jumlahFinal . ' Laporan')
+                ->description('Telah disetujui Kapus')
+                ->descriptionIcon('heroicon-m-check-badge')
+                ->color('success')
                 ->url($laporanUrl),
         ];
     }
@@ -111,59 +96,50 @@ class DashboardRingkasan extends StatsOverviewWidget
             }
         }
 
-        $rataRataCapaian = $jumlahDihitung > 0 ? round($totalCapaian / $jumlahDihitung, 2) : null;
+        $rataRataCapaian = $jumlahDihitung > 0 ? round($totalCapaian / $jumlahDihitung, 2) : 0;
 
-        // Sparkline tren penyerapan
-        $tren               = $anggaranCalc->ambilTrenBulanan($tahun);
-        $sparklinePenyerapan = array_slice($tren['persentase_penyerapan'] ?? [], 0, $bulan);
+        $namaBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ][$bulan] ?? "Bulan {$bulan}";
 
-        $formatRupiah = fn (float $nilai): string => 'Rp ' . number_format($nilai, 0, ',', '.');
-
-        $jumlahFinal       = LaporanBulanan::where('tahun', $tahun)->where('status', 'final')->count();
-        $jumlahDalamProses = LaporanBulanan::where('tahun', $tahun)
-            ->whereIn('status', ['diajukan', 'disetujui_kabid', 'disetujui_katim_umper', 'disetujui_kabag_umum'])
-            ->count();
+        $formatRingkas = function (float $n): string {
+            if ($n >= 1_000_000_000) {
+                return 'Rp ' . number_format($n / 1_000_000_000, 2, ',', '.') . ' M';
+            }
+            if ($n >= 1_000_000) {
+                return 'Rp ' . number_format($n / 1_000_000, 2, ',', '.') . ' Jt';
+            }
+            return 'Rp ' . number_format($n, 0, ',', '.');
+        };
 
         $laporanUrl = \App\Filament\Resources\LaporanBulanans\LaporanBulananResource::getUrl('index');
 
         return [
-            Stat::make('Total IKK Dipantau', $jumlahIkkAktif . ' Indikator')
-                ->description('IKK aktif PPSDMAP tahun ' . $tahun)
-                ->descriptionIcon('heroicon-m-rectangle-group')
-                ->color('info'),
+            Stat::make('Total Indikator', (string) $jumlahIkkAktif)
+                ->description('IKK aktif ' . $tahun)
+                ->descriptionIcon('heroicon-m-rectangle-stack')
+                ->color('primary'),
 
             Stat::make(
-                'Rata-rata Capaian Kinerja',
-                $rataRataCapaian !== null
-                    ? number_format($rataRataCapaian, 1, ',', '.') . '%'
-                    : '—'
+                'Realisasi Kinerja (Rata-rata)',
+                number_format($rataRataCapaian, 2, ',', '.') . '%'
             )
-                ->description(
-                    $rataRataCapaian !== null
-                        ? "Dari {$jumlahDihitung} IKK yang sudah final"
-                        : 'Menunggu laporan final masuk'
-                )
-                ->descriptionIcon('heroicon-m-chart-pie')
-                ->color(
-                    $rataRataCapaian === null ? 'gray' :
-                    ($rataRataCapaian >= 90 ? 'success' :
-                    ($rataRataCapaian >= 70 ? 'info' : 'warning'))
-                )
+                ->description('dari target tahunan')
+                ->descriptionIcon('heroicon-m-chart-bar')
+                ->color('info')
                 ->url($laporanUrl),
 
-            Stat::make('Realisasi Anggaran', $formatRupiah($realisasiAnggaran))
-                ->description(
-                    number_format($persentasePenyerapan, 1, ',', '.') . '% dari Pagu ' . $formatRupiah($totalPagu)
-                )
-                ->descriptionIcon('heroicon-m-banknotes')
-                ->color($persentasePenyerapan >= 80 ? 'success' : ($persentasePenyerapan >= 50 ? 'info' : 'warning'))
-                ->chart($sparklinePenyerapan),
+            Stat::make("Realisasi Anggaran s.d. {$namaBulan}", $formatRingkas($realisasiAnggaran))
+                ->description('dari pagu ' . $formatRingkas($totalPagu))
+                ->descriptionIcon('heroicon-m-credit-card')
+                ->color('success'),
 
-            Stat::make('Status Pelaporan', $jumlahFinal . ' Final / ' . $jumlahDalamProses . ' Proses')
-                ->description('Laporan masuk tahun ' . $tahun)
-                ->descriptionIcon('heroicon-m-document-check')
-                ->color('primary')
-                ->url($laporanUrl),
+            Stat::make('Penyerapan Anggaran', number_format($persentasePenyerapan, 2, ',', '.') . '%')
+                ->description('dari total pagu')
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
+                ->color('warning'),
         ];
     }
 }

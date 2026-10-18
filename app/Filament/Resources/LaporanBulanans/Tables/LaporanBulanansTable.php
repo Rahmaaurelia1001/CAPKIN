@@ -19,63 +19,85 @@ class LaporanBulanansTable
         return $table
             ->columns([
                 TextColumn::make('ikk.kode_ikk')
-                    ->label('Kode IKK')
+                    ->label('Kode')
+                    ->badge()
+                    ->color('primary')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('ikk.nama_ikk')
                     ->label('Indikator Kinerja')
-                    ->searchable()
-                    ->limit(40),
-
-                TextColumn::make('unit.nama')
-                    ->label('Unit Kerja')
+                    ->description(fn (LaporanBulanan $record): string => 
+                        ($record->unit?->nama ?? 'Unit') . ' · PIC: ' . ($record->pic?->name ?? '-')
+                    )
+                    ->wrap()
                     ->searchable(),
 
-                TextColumn::make('pic.name')
-                    ->label('PIC')
-                    ->searchable(),
-
-                TextColumn::make('bulan')
-                    ->label('Bulan')
-                    ->formatStateUsing(fn ($state) => [
-                        1 => 'Januari',
-                        2 => 'Februari',
-                        3 => 'Maret',
-                        4 => 'April',
-                        5 => 'Mei',
-                        6 => 'Juni',
-                        7 => 'Juli',
-                        8 => 'Agustus',
-                        9 => 'September',
-                        10 => 'Oktober',
-                        11 => 'November',
-                        12 => 'Desember',
-                    ][$state] ?? $state)
-                    ->sortable(),
-
-                TextColumn::make('tahun')
-                    ->label('Tahun')
-                    ->sortable(),
+                TextColumn::make('periode')
+                    ->label('Periode')
+                    ->state(fn (LaporanBulanan $record): string => [
+                        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+                    ][$record->bulan] . ' ' . $record->tahun)
+                    ->icon('heroicon-o-calendar')
+                    ->sortable(query: fn ($query, string $direction) => 
+                        $query->orderBy('tahun', $direction)->orderBy('bulan', $direction)
+                    ),
 
                 TextColumn::make('realisasi')
-                    ->label('Realisasi')
-                    ->state(fn (LaporanBulanan $record): float =>
-                        app(KinerjaCalculator::class)->hitung(
+                    ->label('Realisasi Kinerja')
+                    ->state(function (LaporanBulanan $record): string {
+                        $hasil = app(KinerjaCalculator::class)->hitung(
                             $record->ikk_id,
                             $record->bulan,
                             $record->tahun
-                        )['realisasi_bulanan']
-                    )
-                    ->numeric(decimalPlaces: 2),
+                        );
+                        $satuan = $record->ikk?->satuan ?? '';
+                        $nilai = number_format($hasil['realisasi_bulanan'] ?? 0, 2, ',', '.');
+                        
+                        return "{$nilai} {$satuan}";
+                    })
+                    ->description(function (LaporanBulanan $record): string {
+                        $hasil = app(KinerjaCalculator::class)->hitung(
+                            $record->ikk_id,
+                            $record->bulan,
+                            $record->tahun
+                        );
+                        $capaian = number_format($hasil['capaian_kumulatif'] ?? 0, 1, ',', '.');
+                        return "Capaian: {$capaian}%";
+                    }),
 
                 TextColumn::make('status')
                     ->label('Status')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(function (LaporanBulanan $record): string {
+                        $isUmper = (int) $record->unit_id === 6;
+                        return match ($record->status) {
+                            'final' => 'Final',
+                            'perlu_revisi' => 'Perlu Revisi',
+                            'draft' => 'Draf',
+                            'diajukan' => $isUmper ? 'Menunggu Katim UMPer' : 'Menunggu Kabid',
+                            'disetujui_kabid' => 'Menunggu Katim UMPer',
+                            'disetujui_katim_umper' => 'Menunggu Kabag Umum',
+                            'disetujui_kabag_umum' => 'Menunggu Kapus',
+                            default => ucwords(str_replace('_', ' ', $record->status)),
+                        };
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'final' => 'success',
+                        'perlu_revisi' => 'danger',
+                        'draft' => 'gray',
+                        default => 'warning',
+                    }),
 
                 TextColumn::make('bukti_dukung')
                     ->label('Bukti Dukung')
-                    ->placeholder('Belum diunggah'),
+                    ->formatStateUsing(fn ($state) => $state ? 'Ada Dokumen' : 'Belum Ada')
+                    ->icon(fn ($state) => $state ? 'heroicon-o-paper-clip' : 'heroicon-o-minus')
+                    ->color(fn ($state) => $state ? 'primary' : 'gray')
+                    ->url(fn (LaporanBulanan $record) => $record->bukti_dukung ? asset('storage/' . $record->bukti_dukung) : null)
+                    ->openUrlInNewTab(),
 
                 TextColumn::make('created_at')
                     ->label('Dibuat')

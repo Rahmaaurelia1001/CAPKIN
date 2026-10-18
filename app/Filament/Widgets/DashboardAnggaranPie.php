@@ -10,11 +10,11 @@ class DashboardAnggaranPie extends ChartWidget
 {
     use InteractsWithPageFilters;
 
-    protected ?string $heading = 'Proporsi Penyerapan Anggaran';
+    protected ?string $heading = 'Ringkasan Anggaran';
 
-    protected ?string $description = 'Perbandingan anggaran terserap vs sisa pagu berlaku tahun berjalan.';
+    protected ?string $description = 'Proporsi realisasi anggaran terserap vs sisa pagu tahun berjalan.';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 7;
 
     protected int|string|array $columnSpan = [
         'default' => 1,
@@ -52,8 +52,8 @@ class DashboardAnggaranPie extends ChartWidget
                         round($totalRealisasi, 0),
                         round($sisaAnggaran, 0),
                     ],
-                    'backgroundColor'      => ['#0284c7', '#e2e8f0'],
-                    'hoverBackgroundColor' => ['#0369a1', '#cbd5e1'],
+                    'backgroundColor'      => ['#8b5cf6', '#10b981'],
+                    'hoverBackgroundColor' => ['#7c3aed', '#059669'],
                     'borderWidth'          => 3,
                     'borderColor'          => '#ffffff',
                     'hoverBorderWidth'     => 0,

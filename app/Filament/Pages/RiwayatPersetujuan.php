@@ -13,15 +13,15 @@ class RiwayatPersetujuan extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
 
-    protected static ?string $navigationLabel = 'Riwayat Input & Persetujuan';
+    protected static ?string $navigationLabel = 'Riwayat';
 
-    protected static ?string $title = 'Riwayat Input & Persetujuan Laporan';
+    protected static ?string $title = 'Riwayat Pelaporan & Persetujuan';
 
     protected static ?string $slug = 'riwayat-persetujuan';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Pelaporan Kinerja';
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     public static function canAccess(): bool
     {

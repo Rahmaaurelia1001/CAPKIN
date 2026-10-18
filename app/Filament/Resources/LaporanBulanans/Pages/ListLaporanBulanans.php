@@ -13,11 +13,43 @@ class ListLaporanBulanans extends ListRecords
 {
     protected static string $resource = LaporanBulananResource::class;
 
+    public function getTitle(): string
+    {
+        $role = auth()->user()?->role;
+
+        if ($role === 'pic') {
+            return 'Laporan Saya';
+        }
+
+        if (in_array($role, ['kabid_kabag', 'katim_umper', 'kabag_umum', 'kapus'], true)) {
+            return 'Approval Masuk';
+        }
+
+        return 'Laporan Bulanan';
+    }
+
+    public function getSubheading(): ?string
+    {
+        $role = auth()->user()?->role;
+
+        if ($role === 'pic') {
+            return 'Kelola dan pantau status laporan kinerja bulanan Anda';
+        }
+
+        if (in_array($role, ['kabid_kabag', 'katim_umper', 'kabag_umum', 'kapus'], true)) {
+            return 'Daftar laporan kinerja bulanan yang memerlukan verifikasi dan persetujuan Anda';
+        }
+
+        return null;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             CreateAction::make()
-                ->label('Buat Laporan Baru')
+                ->label('Isi Laporan Baru')
+                ->icon('heroicon-o-plus')
+                ->color('primary')
                 ->visible(fn (): bool => auth()->user()?->role === 'pic'),
         ];
     }
