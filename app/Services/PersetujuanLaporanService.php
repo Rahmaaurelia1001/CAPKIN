@@ -87,8 +87,9 @@ class PersetujuanLaporanService
     public function setujui(
         LaporanBulanan $laporan,
         int $tahap,
+        ?string $catatan = null,
     ): void {
-        DB::transaction(function () use ($laporan, $tahap): void {
+        DB::transaction(function () use ($laporan, $tahap, $catatan): void {
             $laporan = LaporanBulanan::query()
                 ->lockForUpdate()
                 ->findOrFail($laporan->id);
@@ -156,6 +157,7 @@ class PersetujuanLaporanService
                 'tahap' => $tahap,
                 'user_id' => $user->id,
                 'keputusan' => 'disetujui',
+                'catatan' => $catatan ? trim($catatan) : null,
                 'diproses_pada' => now(),
             ]);
 

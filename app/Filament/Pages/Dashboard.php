@@ -84,7 +84,12 @@ class Dashboard extends BaseDashboard
                         11 => 's.d. November',
                         12 => 's.d. Desember',
                     ])
-                    ->default((int) now()->month),
+                    ->default(function () {
+                        $maxBulan = \App\Models\LaporanBulanan::where('tahun', now()->year)
+                            ->where('status', 'final')
+                            ->max('bulan');
+                        return $maxBulan ?: 7;
+                    }),
             ]);
     }
 

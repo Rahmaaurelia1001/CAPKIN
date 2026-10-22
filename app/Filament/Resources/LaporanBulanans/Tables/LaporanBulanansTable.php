@@ -306,16 +306,25 @@ class LaporanBulanansTable
                     ->label('Setujui Final')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
-                    ->requiresConfirmation()
+                    ->modalHeading('Persetujuan Final oleh Kepala Pusat')
+                    ->modalDescription('Laporan ini akan disahkan sebagai final dan dikunci secara permanen.')
+                    ->schema([
+                        Textarea::make('catatan_kapus')
+                            ->label('Catatan / Arahan Kapus untuk Kabid/Kabag (Opsional)')
+                            ->placeholder('Tuliskan arahan, masukan, atau apresiasi untuk bidang terkait (opsional)...')
+                            ->rows(3),
+                    ])
                     ->visible(fn (LaporanBulanan $record): bool =>
                         auth()->user()?->role === 'kapus'
                         && $record->status === 'disetujui_kabag_umum'
                     )
-                    ->action(function (LaporanBulanan $record): void {
-                        app(PersetujuanLaporanService::class)->setujui($record, 5);
+                    ->action(function (LaporanBulanan $record, array $data): void {
+                        app(PersetujuanLaporanService::class)->setujui(
+                            $record, 5, $data['catatan_kapus'] ?? null
+                        );
 
                         Notification::make()
-                            ->title('Laporan ditetapkan sebagai final')
+                            ->title('Laporan berhasil disahkan sebagai Final')
                             ->success()
                             ->send();
                     }),

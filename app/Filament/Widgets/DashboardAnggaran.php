@@ -53,44 +53,68 @@ class DashboardAnggaran extends ChartWidget
         $shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
                         'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-        $labels         = [];
-        $dataPenyerapan = [];
-        $dataTarget     = [];
+        $maxBulanData = (int) (\App\Models\AnggaranBulanan::where('tahun', $tahun)
+            ->whereNotNull('realisasi_anggaran')
+            ->max('bulan') ?? 7);
+
+        $labels             = [];
+        $dataPenyerapanKum  = [];
+        $dataTarget         = [];
 
         for ($b = 1; $b <= 12; $b++) {
             $labels[]     = $shortMonths[$b - 1];
             $dataTarget[] = 100;
 
-            if ($b <= $bulanFilter) {
-                $persen = $tren['persentase_penyerapan'][$b - 1] ?? 0;
-                $dataPenyerapan[] = round($persen, 1);
+            if ($b <= min($bulanFilter, $maxBulanData)) {
+                $kumulatif = $tren['persentase_penyerapan'][$b - 1] ?? 0;
+                $dataPenyerapanKum[] = round($kumulatif, 2);
             } else {
-                $dataPenyerapan[] = null;
+                $dataPenyerapanKum[] = null;
             }
         }
 
         return [
             'datasets' => [
                 [
-                    'label'           => 'Penyerapan (%)',
-                    'data'            => $dataPenyerapan,
-                    'type'            => 'bar',
-                    'backgroundColor' => '#8b5cf6',
-                    'hoverBackgroundColor' => '#7c3aed',
-                    'borderRadius'    => 6,
-                    'borderSkipped'   => false,
-                    'barPercentage'   => 0.65,
+                    'label'                => 'Kurva S (%)',
+                    'data'                 => $dataPenyerapanKum,
+                    'type'                 => 'line',
+                    'fill'                 => false,
+                    'borderColor'          => '#4f46e5', // Deep Indigo Kurva S
+                    'backgroundColor'      => '#4f46e5',
+                    'borderWidth'          => 3,
+                    'tension'              => 0.25,      // Kurva S halus menghubungkan ujung bar
+                    'pointBackgroundColor' => '#ffffff',
+                    'pointBorderColor'     => '#4f46e5',
+                    'pointRadius'          => 6,
+                    'pointHoverRadius'     => 8,
+                    'pointBorderWidth'     => 2.5,
+                    'order'                => 1,
+                ],
+                [
+                    'label'                => 'Realisasi Kumulatif (%)',
+                    'data'                 => $dataPenyerapanKum,
+                    'type'                 => 'bar',
+                    'backgroundColor'      => 'rgba(99, 102, 241, 0.35)', // Barchart lama dengan transparansi elegan
+                    'hoverBackgroundColor' => 'rgba(99, 102, 241, 0.65)',
+                    'borderColor'          => '#6366f1',
+                    'borderWidth'          => 1.5,
+                    'borderRadius'         => 6,
+                    'borderSkipped'        => false,
+                    'barPercentage'        => 0.65,
+                    'order'                => 2,
                 ],
                 [
                     'label'            => 'Target 100%',
                     'data'             => $dataTarget,
                     'type'             => 'line',
                     'fill'             => false,
-                    'borderColor'      => '#ef4444',
+                    'borderColor'      => '#f43f5e',
                     'borderWidth'      => 1.5,
-                    'borderDash'       => [5, 5],
+                    'borderDash'       => [6, 6],
                     'pointRadius'      => 0,
                     'pointHoverRadius' => 0,
+                    'order'            => 3,
                 ],
             ],
             'labels' => $labels,
@@ -125,7 +149,7 @@ class DashboardAnggaran extends ChartWidget
                     enabled: true,
                     backgroundColor: '#ffffff',
                     titleColor: '#0f172a',
-                    bodyColor: '#8b5cf6',
+                    bodyColor: '#059669',
                     borderColor: '#e2e8f0',
                     borderWidth: 1,
                     padding: { top: 10, bottom: 10, left: 14, right: 14 },

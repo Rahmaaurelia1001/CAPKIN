@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Services\AnggaranCalculator;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
@@ -36,36 +37,40 @@ class DashboardAnggaranPerIKK extends ChartWidget
             ->ambilPerbandinganPerIkk($tahun, $bulan);
 
         $labels        = [];
+        $namaIkkList   = [];
         $dataPagu      = [];
         $dataRealisasi = [];
         $warnaRealisi  = [];
 
         foreach ($items as $item) {
             $labels[]        = $item['kode_ikk'];
+            $namaIkkList[]   = $item['nama_ikk'];
             $dataPagu[]      = $item['pagu'];
             $dataRealisasi[] = $item['realisasi'];
             $warnaRealisi[]  = $item['lebihi_pagu']
-                ? 'rgba(244, 63, 94, 0.8)'  // rose-500
-                : 'rgba(2, 132, 199, 0.8)'; // sky-600
+                ? 'rgba(239, 68, 68, 0.9)'  // red-500
+                : 'rgba(79, 70, 229, 0.85)'; // indigo-600
         }
 
         return [
             'datasets' => [
                 [
-                    'label'           => 'Pagu (Rp)',
+                    'label'           => 'Pagu',
                     'data'            => $dataPagu,
-                    'backgroundColor' => 'rgba(203, 213, 225, 0.6)',
+                    'namaIkk'         => $namaIkkList,
+                    'backgroundColor' => 'rgba(203, 213, 225, 0.7)',
                     'borderColor'     => '#94a3b8',
                     'borderWidth'     => 1,
-                    'borderRadius'    => 5,
+                    'borderRadius'    => 6,
                     'borderSkipped'   => false,
                 ],
                 [
-                    'label'           => 'Realisasi (Rp)',
+                    'label'           => 'Realisasi',
                     'data'            => $dataRealisasi,
+                    'namaIkk'         => $namaIkkList,
                     'backgroundColor' => $warnaRealisi,
                     'borderWidth'     => 0,
-                    'borderRadius'    => 5,
+                    'borderRadius'    => 6,
                     'borderSkipped'   => false,
                 ],
             ],
@@ -78,66 +83,117 @@ class DashboardAnggaranPerIKK extends ChartWidget
         return 'bar';
     }
 
-    protected function getOptions(): array
+    protected function getOptions(): RawJs
     {
-        return [
-            'plugins' => [
-                'legend' => [
-                    'display'  => true,
-                    'position' => 'top',
-                    'align'    => 'end',
-                    'labels'   => [
-                        'usePointStyle' => true,
-                        'pointStyle'    => 'circle',
-                        'boxWidth'      => 8,
-                        'padding'       => 16,
-                    ],
-                ],
-                'tooltip' => [
-                    'callbacks' => [
-                        'label' => 'function(ctx) {
-                            var val = new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(ctx.raw);
-                            return ctx.dataset.label + ": Rp " + val;
-                        }',
-                        'afterBody' => 'function(ctx) {
-                            if (ctx[1]) {
-                                var pagu = ctx[0].raw;
-                                var real = ctx[1].raw;
+        return RawJs::make(<<<JS
+        {
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 8,
+                        padding: 16,
+                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' },
+                        color: '#475569'
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: '#ffffff',
+                    titleColor: '#0f172a',
+                    bodyColor: '#334155',
+                    borderColor: '#e2e8f0',
+                    borderWidth: 1,
+                    padding: { top: 12, bottom: 12, left: 14, right: 14 },
+                    cornerRadius: 10,
+                    displayColors: true,
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    usePointStyle: true,
+                    titleFont: { size: 12, weight: 'bold', family: 'Plus Jakarta Sans' },
+                    bodyFont: { size: 12, weight: '500', family: 'Plus Jakarta Sans' },
+                    boxPadding: 4,
+                    callbacks: {
+                        title: function(items) {
+                            var item = items[0];
+                            var kode = item.label;
+                            var namaList = item.dataset.namaIkk || [];
+                            var nama = namaList[item.dataIndex] || '';
+                            if (nama.length > 45) {
+                                nama = nama.substring(0, 42) + '...';
+                            }
+                            return kode + (nama ? ' (' + nama + ')' : '');
+                        },
+                        label: function(ctx) {
+                            var val = ctx.raw || 0;
+                            var formatted = new Intl.NumberFormat('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
+                                maximumFractionDigits: 0
+                            }).format(val);
+                            return ' ' + ctx.dataset.label + ' : ' + formatted;
+                        },
+                        afterBody: function(items) {
+                            if (items.length >= 2) {
+                                var pagu = items[0].raw || 0;
+                                var real = items[1].raw || 0;
                                 if (pagu > 0) {
-                                    var pct = Math.round((real / pagu) * 100);
-                                    return ["Penyerapan: " + pct + "%"];
+                                    var pct = ((real / pagu) * 100).toFixed(1);
+                                    var note = real > pagu ? ' (Melebihi Pagu)' : '';
+                                    return ['Penyerapan : ' + pct + '%' + note];
+                                } else if (real > 0) {
+                                    return ['Penyerapan : >100% (Pagu Rp 0)'];
                                 }
                             }
                             return [];
-                        }',
-                    ],
-                    'mode'            => 'index',
-                    'intersect'       => false,
-                    'backgroundColor' => 'rgba(15, 23, 42, 0.9)',
-                    'padding'         => 12,
-                    'cornerRadius'    => 8,
-                ],
-            ],
-            'scales' => [
-                'x' => [
-                    'grid'  => ['display' => false],
-                    'ticks' => ['font' => ['size' => 11, 'weight' => '600']],
-                ],
-                'y' => [
-                    'beginAtZero' => true,
-                    'grid'        => ['color' => 'rgba(226, 232, 240, 0.5)'],
-                    'ticks'       => [
-                        'callback' => 'function(v) {
-                            return "Rp " + new Intl.NumberFormat("id-ID",{notation:"compact",maximumFractionDigits:1}).format(v);
-                        }',
-                    ],
-                ],
-            ],
-            'responsive'          => true,
-            'maintainAspectRatio' => false,
-            'animation'           => ['duration' => 800, 'easing' => 'easeInOutQuart'],
-            'interaction'         => ['mode' => 'index', 'intersect' => false],
-        ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' },
+                        color: '#64748b'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f1f5f9',
+                        borderDash: [4, 4]
+                    },
+                    ticks: {
+                        font: { size: 11, family: 'Plus Jakarta Sans' },
+                        color: '#64748b',
+                        callback: function(v) {
+                            if (v >= 1000000000) {
+                                return 'Rp ' + (v / 1000000000).toFixed(1) + ' M';
+                            } else if (v >= 1000000) {
+                                return 'Rp ' + (v / 1000000).toFixed(0) + ' Jt';
+                            }
+                            return 'Rp ' + v;
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 800,
+                easing: 'easeInOutQuart'
+            }
+        }
+        JS);
     }
 
     protected function getMaxHeight(): ?string

@@ -29,6 +29,14 @@ class ViewLaporanBulanan extends ViewRecord
                     TextEntry::make('ikk.nama_ikk')
                         ->label('Indikator Kinerja'),
 
+                    TextEntry::make('sasaran_kegiatan')
+                        ->label('Sasaran Kegiatan Induk')
+                        ->state(fn ($record) => $record->ikk?->sasaranKegiatan
+                            ? "{$record->ikk->sasaranKegiatan->kode} — {$record->ikk->sasaranKegiatan->nama}"
+                            : '-'
+                        )
+                        ->columnSpanFull(),
+
                     TextEntry::make('unit.nama')
                         ->label('Unit Kerja'),
 
@@ -110,7 +118,14 @@ class ViewLaporanBulanan extends ViewRecord
 
                     TextEntry::make('realisasi_anggaran')
                         ->label('Realisasi Anggaran')
-                        ->placeholder('Belum diisi'),
+                        ->state(function ($record) {
+                            $anggaran = \App\Models\AnggaranBulanan::where('ikk_id', $record->ikk_id)
+                                ->where('bulan', $record->bulan)
+                                ->where('tahun', $record->tahun)
+                                ->first();
+                            $nominal = $anggaran ? (float) $anggaran->realisasi_anggaran : (float) ($record->realisasi_anggaran ?? 0);
+                            return $nominal > 0 ? 'Rp ' . number_format($nominal, 0, ',', '.') : 'Belum diisi oleh Katim Umper';
+                        }),
 
                     TextEntry::make('status')
                         ->label('Status Laporan')
@@ -273,9 +288,15 @@ class ViewLaporanBulanan extends ViewRecord
                 ->label(fn (): string => auth()->user()?->role === 'kapus' ? 'Setujui (Final)' : 'Setujui')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->requiresConfirmation()
+                ->requiresConfirmation(fn () => auth()->user()?->role !== 'kapus')
+                ->schema(fn () => auth()->user()?->role === 'kapus' ? [
+                    \Filament\Forms\Components\Textarea::make('catatan_kapus')
+                        ->label('Catatan / Arahan Kapus untuk Kabid/Kabag (Opsional)')
+                        ->placeholder('Tuliskan arahan, masukan, atau apresiasi untuk bidang terkait (opsional)...')
+                        ->rows(3),
+                ] : [])
                 ->visible(fn (): bool => $this->canUserApprove())
-                ->action(function (): void {
+                ->action(function (array $data): void {
                     $tahap = match (auth()->user()?->role) {
                         'kabid_kabag' => 2,
                         'katim_umper' => 3,
@@ -284,7 +305,9 @@ class ViewLaporanBulanan extends ViewRecord
                         default => null,
                     };
                     if ($tahap) {
-                        app(\App\Services\PersetujuanLaporanService::class)->setujui($this->record, $tahap);
+                        app(\App\Services\PersetujuanLaporanService::class)->setujui(
+                            $this->record, $tahap, $data['catatan_kapus'] ?? null
+                        );
                         \Filament\Notifications\Notification::make()->title('Laporan berhasil disetujui')->success()->send();
                     }
                 }),

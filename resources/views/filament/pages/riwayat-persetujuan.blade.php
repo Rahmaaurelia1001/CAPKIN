@@ -370,9 +370,18 @@
                                     {{ $riwayatTerakhir->diproses_pada ? $riwayatTerakhir->diproses_pada->translatedFormat('d M Y H:i') : '-' }}
                                 </span>
                             </div>
-                            @if ($riwayatTerakhir->catatan)
+                            @if ($riwayatTerakhir->catatan && $riwayatTerakhir->tahap !== 5)
                                 <div class="rp-note-box">
                                     <strong>Catatan:</strong> {{ $riwayatTerakhir->catatan }}
+                                </div>
+                            @endif
+
+                            @php
+                                $catatanKapus = $item->persetujuan->where('tahap', 5)->filter(fn($p) => filled($p->catatan))->last();
+                            @endphp
+                            @if ($catatanKapus)
+                                <div style="margin-top: 0.5rem; padding: 0.5rem 0.75rem; background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 0.375rem; font-size: 0.75rem;">
+                                    <strong>Arahan / Catatan Kepala Pusat:</strong> {{ $catatanKapus->catatan }}
                                 </div>
                             @endif
                         </div>

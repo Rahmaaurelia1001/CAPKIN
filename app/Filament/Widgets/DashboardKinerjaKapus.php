@@ -58,11 +58,15 @@ class DashboardKinerjaKapus extends ChartWidget
         $dataCapaian     = [];
         $dataTarget      = [];
 
+        $maxBulanData = (int) (\App\Models\LaporanBulanan::where('tahun', $tahun)
+            ->where('status', 'final')
+            ->max('bulan') ?? 7);
+
         for ($b = 1; $b <= 12; $b++) {
             $labels[]     = $shortMonths[$b - 1];
             $dataTarget[] = 100;
 
-            if ($b <= $bulanFilter) {
+            if ($b <= min($bulanFilter, $maxBulanData)) {
                 $totalCapaian   = 0;
                 $jumlahDihitung = 0;
 
@@ -84,19 +88,19 @@ class DashboardKinerjaKapus extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label'                => 'Realisasi Kinerja',
+                    'label'                => 'Realisasi Kinerja (%)',
                     'data'                 => $dataCapaian,
                     'type'                 => 'line',
                     'fill'                 => false,
-                    'borderColor'          => '#2563eb',
-                    'backgroundColor'      => '#2563eb',
-                    'borderWidth'          => 2.5,
-                    'tension'              => 0.35,
-                    'pointBackgroundColor' => '#2563eb',
-                    'pointBorderColor'     => '#ffffff',
+                    'borderColor'          => '#4f46e5',
+                    'backgroundColor'      => '#4f46e5',
+                    'borderWidth'          => 3,
+                    'tension'              => 0, // Tegas & lurus sesuai arahan mentor
+                    'pointBackgroundColor' => '#ffffff',
+                    'pointBorderColor'     => '#4f46e5',
                     'pointHoverRadius'     => 7,
                     'pointRadius'          => 5,
-                    'pointBorderWidth'     => 2,
+                    'pointBorderWidth'     => 2.5,
                     'spanGaps'             => false,
                 ],
                 [
@@ -104,9 +108,9 @@ class DashboardKinerjaKapus extends ChartWidget
                     'data'                 => $dataTarget,
                     'type'                 => 'line',
                     'fill'                 => false,
-                    'borderColor'          => '#ef4444',
-                    'borderWidth'          => 1.5,
-                    'borderDash'           => [5, 5],
+                    'borderColor'          => '#f43f5e',
+                    'borderWidth'          => 2,
+                    'borderDash'           => [6, 6],
                     'pointRadius'          => 0,
                     'pointHoverRadius'     => 0,
                 ],

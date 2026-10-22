@@ -80,9 +80,19 @@ class AnggaranBulanansTable
                     )
                     ->sortable(),
 
-                TextColumn::make('dataDukung.nama_file')
-                    ->label('Bukti Dukung')
-                    ->placeholder('Belum diunggah')
+                TextColumn::make('bukti_dokumen')
+                    ->label('Bukti Anggaran')
+                    ->state(function ($record) {
+                        if ($record->dataDukung?->nama_file) {
+                            return $record->dataDukung->nama_file;
+                        }
+                        $doc = DataDukung::where('bulan', $record->bulan)
+                            ->where('tahun', $record->tahun)
+                            ->whereNull('laporan_bulanan_id')
+                            ->first();
+                        return $doc?->nama_file ?? 'Belum diunggah';
+                    })
+                    ->icon('heroicon-o-document-text')
                     ->limit(30),
 
                 TextColumn::make('keterangan')
@@ -157,16 +167,24 @@ class AnggaranBulanansTable
                 Action::make('lihatBukti')
                     ->label('Lihat Bukti')
                     ->icon('heroicon-o-eye')
-                    ->visible(
-                        fn ($record) => filled(
-                            $record->dataDukung?->path_file
-                        )
-                    )
-                    ->url(
-                        fn ($record) => Storage::disk('public')->url(
-                            $record->dataDukung->path_file
-                        )
-                    )
+                    ->visible(function ($record) {
+                        if (filled($record->dataDukung?->path_file)) return true;
+                        return DataDukung::where('bulan', $record->bulan)
+                            ->where('tahun', $record->tahun)
+                            ->whereNull('laporan_bulanan_id')
+                            ->whereNotNull('path_file')
+                            ->exists();
+                    })
+                    ->url(function ($record) {
+                        $path = $record->dataDukung?->path_file;
+                        if (! $path) {
+                            $path = DataDukung::where('bulan', $record->bulan)
+                                ->where('tahun', $record->tahun)
+                                ->whereNull('laporan_bulanan_id')
+                                ->value('path_file');
+                        }
+                        return $path ? Storage::disk('public')->url($path) : null;
+                    })
                     ->openUrlInNewTab(),
 
                 EditAction::make()

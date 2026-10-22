@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Services\AnggaranCalculator;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
@@ -52,8 +53,8 @@ class DashboardAnggaranPie extends ChartWidget
                         round($totalRealisasi, 0),
                         round($sisaAnggaran, 0),
                     ],
-                    'backgroundColor'      => ['#8b5cf6', '#10b981'],
-                    'hoverBackgroundColor' => ['#7c3aed', '#059669'],
+                    'backgroundColor'      => ['#059669', '#94a3b8'],
+                    'hoverBackgroundColor' => ['#047857', '#64748b'],
                     'borderWidth'          => 3,
                     'borderColor'          => '#ffffff',
                     'hoverBorderWidth'     => 0,
@@ -71,38 +72,61 @@ class DashboardAnggaranPie extends ChartWidget
         return 'doughnut';
     }
 
-    protected function getOptions(): array
+    protected function getOptions(): RawJs
     {
-        return [
-            'cutout'  => '72%',
-            'plugins' => [
-                'legend' => [
-                    'display'  => true,
-                    'position' => 'bottom',
-                    'labels'   => [
-                        'usePointStyle' => true,
-                        'pointStyle'    => 'circle',
-                        'padding'       => 16,
-                    ],
-                ],
-                'tooltip' => [
-                    'callbacks' => [
-                        'label' => 'function(ctx) {
-                            var val = new Intl.NumberFormat("id-ID", {
+        return RawJs::make(<<<JS
+        {
+            cutout: '72%',
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 8,
+                        padding: 16,
+                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' },
+                        color: '#475569'
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: '#ffffff',
+                    titleColor: '#0f172a',
+                    bodyColor: '#334155',
+                    borderColor: '#e2e8f0',
+                    borderWidth: 1,
+                    padding: { top: 10, bottom: 10, left: 14, right: 14 },
+                    cornerRadius: 10,
+                    displayColors: true,
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    usePointStyle: true,
+                    titleFont: { size: 12, weight: 'bold', family: 'Plus Jakarta Sans' },
+                    bodyFont: { size: 12, weight: '600', family: 'Plus Jakarta Sans' },
+                    boxPadding: 4,
+                    callbacks: {
+                        title: function(items) {
+                            return items[0].label;
+                        },
+                        label: function(ctx) {
+                            var val = ctx.raw || 0;
+                            var formatted = new Intl.NumberFormat('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
                                 maximumFractionDigits: 0
-                            }).format(ctx.raw);
-                            return " Rp " + val;
-                        }',
-                    ],
-                    'backgroundColor' => 'rgba(15, 23, 42, 0.9)',
-                    'padding'         => 12,
-                    'cornerRadius'    => 8,
-                ],
-            ],
-            'responsive'          => true,
-            'maintainAspectRatio' => false,
-            'animation'           => ['animateRotate' => true, 'duration' => 900],
-        ];
+                            }).format(val);
+                            return ' Nominal: ' + formatted;
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { animateRotate: true, duration: 800 }
+        }
+        JS);
     }
 
     protected function getMaxHeight(): ?string

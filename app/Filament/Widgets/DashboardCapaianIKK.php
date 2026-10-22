@@ -5,7 +5,9 @@ namespace App\Filament\Widgets;
 use App\Models\Ikk;
 use App\Models\LaporanBulanan;
 use App\Services\DashboardKinerjaCalculator;
+use App\Filament\Pages\DetailIkk;
 use Filament\Tables;
+use Filament\Actions\Action;
 use Filament\Tables\Table;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget;
@@ -89,7 +91,7 @@ class DashboardCapaianIKK extends TableWidget
                     ->color(
                         fn (?float $state): string =>
                             $state === null ? 'gray' :
-                            ($state >= 100 ? 'success' : ($state >= 70 ? 'info' : 'warning'))
+                            ($state >= 100 ? 'success' : ($state >= 70 ? 'info' : 'danger'))
                     ),
 
                 Tables\Columns\TextColumn::make('laporan_count')
@@ -140,10 +142,31 @@ class DashboardCapaianIKK extends TableWidget
                     ->color(fn (string $state): string => match ($state) {
                         'Target Tercapai' => 'success',
                         'On Track'        => 'info',
-                        'Perlu Perhatian' => 'warning',
+                        'Perlu Perhatian' => 'danger',
                         default           => 'gray',
+                    })
+                    ->icon(fn (string $state): ?string => match ($state) {
+                        'Target Tercapai' => 'heroicon-m-check-circle',
+                        'On Track'        => 'heroicon-m-arrow-trending-up',
+                        'Perlu Perhatian' => 'heroicon-m-exclamation-triangle',
+                        default           => 'heroicon-m-minus-circle',
                     }),
             ])
+            ->actions([
+                Action::make('lihatDetail')
+                    ->label('Detail & Grafik')
+                    ->icon('heroicon-m-chart-bar-square')
+                    ->button()
+                    ->size('xs')
+                    ->color('primary')
+                    ->url(fn (Ikk $record) => DetailIkk::getUrl([
+                        'ikk_id' => $record->id,
+                        'tahun'  => $tahun,
+                        'bulan'  => $bulan,
+                    ]))
+                    ->openUrlInNewTab(false),
+            ])
+            ->recordAction('lihatDetail')
             ->defaultSort('kode_ikk')
             ->paginated(false)
             ->striped();

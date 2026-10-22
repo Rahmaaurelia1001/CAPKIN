@@ -84,19 +84,10 @@ class DashboardRingkasan extends StatsOverviewWidget
         $realisasiAnggaran    = $anggaranCalc->hitungTotalRealisasi($tahun, $bulan);
         $persentasePenyerapan = $anggaranCalc->hitungPersentasePenyerapan($tahun, $bulan) ?? 0;
 
-        $ikks           = Ikk::where('is_active', true)->get();
-        $totalCapaian   = 0;
-        $jumlahDihitung = 0;
-
-        foreach ($ikks as $ikk) {
-            $hasil = $kinerjaCalc->hitung($ikk, $bulan, $tahun);
-            if ($hasil['ada_laporan_final'] ?? false) {
-                $totalCapaian += (float) $hasil['capaian_kumulatif'];
-                $jumlahDihitung++;
-            }
-        }
-
-        $rataRataCapaian = $jumlahDihitung > 0 ? round($totalCapaian / $jumlahDihitung, 2) : 0;
+        $jumlahFinal = LaporanBulanan::where('tahun', $tahun)
+            ->where('bulan', '<=', $bulan)
+            ->where('status', 'final')
+            ->count();
 
         $namaBulan = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -117,29 +108,26 @@ class DashboardRingkasan extends StatsOverviewWidget
         $laporanUrl = \App\Filament\Resources\LaporanBulanans\LaporanBulananResource::getUrl('index');
 
         return [
-            Stat::make('Total Indikator', (string) $jumlahIkkAktif)
-                ->description('IKK aktif ' . $tahun)
+            Stat::make('Total Indikator', (string) $jumlahIkkAktif . ' IKK')
+                ->description('Indikator aktif TA ' . $tahun)
                 ->descriptionIcon('heroicon-m-rectangle-stack')
                 ->color('primary'),
 
-            Stat::make(
-                'Realisasi Kinerja (Rata-rata)',
-                number_format($rataRataCapaian, 2, ',', '.') . '%'
-            )
-                ->description('dari target tahunan')
-                ->descriptionIcon('heroicon-m-chart-bar')
-                ->color('info')
+            Stat::make('Laporan Disahkan', (string) $jumlahFinal . ' Laporan')
+                ->description("Status final s.d. {$namaBulan}")
+                ->descriptionIcon('heroicon-m-check-badge')
+                ->color('success')
                 ->url($laporanUrl),
 
             Stat::make("Realisasi Anggaran s.d. {$namaBulan}", $formatRingkas($realisasiAnggaran))
                 ->description('dari pagu ' . $formatRingkas($totalPagu))
                 ->descriptionIcon('heroicon-m-credit-card')
-                ->color('success'),
+                ->color('info'),
 
             Stat::make('Penyerapan Anggaran', number_format($persentasePenyerapan, 2, ',', '.') . '%')
-                ->description('dari total pagu')
+                ->description('dari total pagu TA ' . $tahun)
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('warning'),
+                ->color($persentasePenyerapan >= 50 ? 'success' : 'warning'),
         ];
     }
 }

@@ -29,8 +29,16 @@ class LaporanBulananForm
                             $query->where('is_active', true);
 
                             if (auth()->user()?->role === 'pic') {
-                                $query->whereHas('picUsers', function ($q) {
-                                    $q->where('users.id', auth()->id());
+                                $unitId = auth()->user()->unit_id;
+                                $query->where(function ($q) use ($unitId) {
+                                    if ($unitId) {
+                                        $q->whereHas('units', function ($uq) use ($unitId) {
+                                            $uq->where('units.id', $unitId);
+                                        });
+                                    }
+                                    $q->orWhereHas('picUsers', function ($pq) {
+                                        $pq->where('users.id', auth()->id());
+                                    });
                                 });
                             }
                         }
@@ -42,7 +50,32 @@ class LaporanBulananForm
                     ->searchable()
                     ->preload()
                     ->live()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if (! $state) {
+                            $set('sasaran_kegiatan_display', null);
+                            return;
+                        }
+                        $ikk = Ikk::with('sasaranKegiatan')->find($state);
+                        if ($ikk && $ikk->sasaranKegiatan) {
+                            $set('sasaran_kegiatan_display', "{$ikk->sasaranKegiatan->kode} — {$ikk->sasaranKegiatan->nama}");
+                        } else {
+                            $set('sasaran_kegiatan_display', '-');
+                        }
+                    })
                     ->required(),
+
+                TextInput::make('sasaran_kegiatan_display')
+                    ->label('Sasaran Kegiatan Induk')
+                    ->placeholder('Otomatis terisi saat IKK dipilih')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->afterStateHydrated(function ($component, $state, ?\Illuminate\Database\Eloquent\Model $record) {
+                        if ($record && $record->ikk?->sasaranKegiatan) {
+                            $component->state("{$record->ikk->sasaranKegiatan->kode} — {$record->ikk->sasaranKegiatan->nama}");
+                        }
+                    })
+                    ->helperText('Otomatis terisi dari data induk IKK (Read-only)')
+                    ->columnSpanFull(),
 
                 Select::make('unit_id')
                     ->label('Unit Kerja')
@@ -357,15 +390,6 @@ class LaporanBulananForm
                     ->placeholder('Jelaskan langkah tindak lanjut yang akan dilakukan...')
                     ->rows(3)
                     ->columnSpanFull(),
-
-                TextInput::make('realisasi_anggaran')
-                    ->label('Realisasi Anggaran (Rp)')
-                    ->numeric()
-                    ->minValue(0)
-                    ->prefix('Rp')
-                    ->placeholder('Masukkan nominal realisasi anggaran'),
-
-                
             ]);
         }
 

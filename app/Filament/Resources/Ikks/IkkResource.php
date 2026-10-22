@@ -7,6 +7,7 @@ use App\Filament\Resources\Ikks\Pages\EditIkk;
 use App\Filament\Resources\Ikks\Pages\ListIkks;
 use App\Filament\Resources\Ikks\Schemas\IkkForm;
 use App\Filament\Resources\Ikks\Tables\IkksTable;
+use App\Filament\Resources\Ikks\RelationManagers\KomponensRelationManager;
 use App\Filament\Resources\Ikks\RelationManagers\PicsRelationManager;
 use App\Filament\Resources\Ikks\RelationManagers\UnitsRelationManager;
 use App\Models\Ikk;
@@ -49,6 +50,7 @@ class IkkResource extends Resource
         return [
             UnitsRelationManager::class,
             PicsRelationManager::class,
+            KomponensRelationManager::class,
         ];
     }
 
