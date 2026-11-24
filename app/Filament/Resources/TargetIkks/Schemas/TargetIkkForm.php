@@ -28,12 +28,27 @@ class TargetIkkForm
                     )
                     ->searchable()
                     ->preload()
+                    ->live()
                     ->required(),
 
                 TextInput::make('tahun')
                     ->label('Tahun')
                     ->numeric()
-                    ->required(),
+                    ->integer()
+                    ->minValue(2020)
+                    ->maxValue(2100)
+                    ->live()
+                    ->required()
+                    ->unique(
+                        table: 'target_ikks',
+                        column: 'tahun',
+                        modifyRuleUsing: fn ($rule, callable $get) => $rule
+                            ->where('ikk_periode_id', $get('ikk_periode_id')),
+                        ignoreRecord: true,
+                    )
+                    ->validationMessages([
+                        'unique' => 'Target IKK untuk periode dan tahun ini sudah pernah dibuat.',
+                    ]),
 
                 TextInput::make('nilai_target')
                     ->label('Nilai Target')

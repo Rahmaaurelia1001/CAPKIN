@@ -37,10 +37,10 @@ class DashboardAnggaranPie extends ChartWidget
         $tahun = (int) ($this->filters['tahun'] ?? now()->year);
         $bulan = (int) ($this->filters['bulan'] ?? now()->month);
 
-        $calc          = app(AnggaranCalculator::class);
-        $totalPagu     = $calc->hitungTotalPagu($tahun, $bulan);
+        $calc           = app(AnggaranCalculator::class);
+        $totalPagu      = $calc->hitungTotalPagu($tahun, $bulan);
         $totalRealisasi = $calc->hitungTotalRealisasi($tahun, $bulan);
-        $sisaAnggaran  = max(0, $totalPagu - $totalRealisasi);
+        $sisaAnggaran   = max(0, $totalPagu - $totalRealisasi);
 
         $persenTerserap = $totalPagu > 0 ? round(($totalRealisasi / $totalPagu) * 100, 1) : 0;
         $persenSisa     = $totalPagu > 0 ? round(($sisaAnggaran / $totalPagu) * 100, 1) : 0;
@@ -48,16 +48,17 @@ class DashboardAnggaranPie extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label'            => 'Anggaran (Rp)',
-                    'data'             => [
+                    'label'                => 'Anggaran (Rp)',
+                    'data'                 => [
                         round($totalRealisasi, 0),
                         round($sisaAnggaran, 0),
                     ],
-                    'backgroundColor'      => ['#059669', '#94a3b8'],
-                    'hoverBackgroundColor' => ['#047857', '#64748b'],
-                    'borderWidth'          => 3,
+                    // Warna favorit: Ungu Amethyst (Terserap) & Biru Sky (Sisa)
+                    'backgroundColor'      => ['#9b59b6', '#3498db'],
+                    'hoverBackgroundColor' => ['#8e44ad', '#2563eb'],
+                    'borderWidth'          => 2,
                     'borderColor'          => '#ffffff',
-                    'hoverBorderWidth'     => 0,
+                    'hoverBorderWidth'     => 3,
                 ],
             ],
             'labels' => [
@@ -76,7 +77,7 @@ class DashboardAnggaranPie extends ChartWidget
     {
         return RawJs::make(<<<JS
         {
-            cutout: '72%',
+            cutout: '68%',
             plugins: {
                 legend: {
                     display: true,
@@ -86,24 +87,24 @@ class DashboardAnggaranPie extends ChartWidget
                         pointStyle: 'circle',
                         boxWidth: 8,
                         padding: 16,
-                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' },
+                        font: { size: 12, weight: '700', family: 'Plus Jakarta Sans' },
                         color: '#475569'
                     }
                 },
                 tooltip: {
                     enabled: true,
-                    backgroundColor: '#ffffff',
-                    titleColor: '#0f172a',
-                    bodyColor: '#334155',
-                    borderColor: '#e2e8f0',
+                    backgroundColor: '#0f172a',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
+                    borderColor: 'rgba(51, 65, 85, 0.8)',
                     borderWidth: 1,
-                    padding: { top: 10, bottom: 10, left: 14, right: 14 },
+                    padding: 12,
                     cornerRadius: 10,
                     displayColors: true,
                     boxWidth: 8,
                     boxHeight: 8,
                     usePointStyle: true,
-                    titleFont: { size: 12, weight: 'bold', family: 'Plus Jakarta Sans' },
+                    titleFont: { size: 13, weight: '800', family: 'Plus Jakarta Sans' },
                     bodyFont: { size: 12, weight: '600', family: 'Plus Jakarta Sans' },
                     boxPadding: 4,
                     callbacks: {

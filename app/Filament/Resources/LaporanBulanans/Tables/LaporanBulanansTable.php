@@ -10,6 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class LaporanBulanansTable
@@ -328,6 +329,43 @@ class LaporanBulanansTable
                             ->success()
                             ->send();
                     }),
+            ])
+            ->filters([
+                SelectFilter::make('ikk_id')
+                    ->label('Filter IKK')
+                    ->relationship('ikk', 'nama_ikk')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->kode_ikk} — {$record->nama_ikk}")
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('bulan')
+                    ->label('Filter Bulan')
+                    ->options([
+                        1  => 'Januari',
+                        2  => 'Februari',
+                        3  => 'Maret',
+                        4  => 'April',
+                        5  => 'Mei',
+                        6  => 'Juni',
+                        7  => 'Juli',
+                        8  => 'Agustus',
+                        9  => 'September',
+                        10 => 'Oktober',
+                        11 => 'November',
+                        12 => 'Desember',
+                    ]),
+
+                SelectFilter::make('status')
+                    ->label('Filter Status')
+                    ->options([
+                        'draft'                 => 'Draf',
+                        'diajukan'              => 'Diajukan',
+                        'disetujui_kabid'       => 'Disetujui Kabid/Kabag',
+                        'disetujui_katim_umper' => 'Disetujui Katim UMPer',
+                        'disetujui_kabag_umum'  => 'Disetujui Kabag Umum',
+                        'final'                 => 'Final',
+                        'perlu_revisi'          => 'Perlu Revisi',
+                    ]),
             ]);
     }
 }

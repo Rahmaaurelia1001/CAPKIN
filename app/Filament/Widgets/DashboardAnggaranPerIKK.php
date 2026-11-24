@@ -6,14 +6,46 @@ use App\Services\AnggaranCalculator;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 
 class DashboardAnggaranPerIKK extends ChartWidget
 {
     use InteractsWithPageFilters;
 
-    protected ?string $heading = 'Pagu vs Realisasi Anggaran per IKK';
+    public function getHeading(): string|Htmlable|null
+    {
+        $tahun = (int) ($this->filters['tahun'] ?? now()->year);
+        $bulan = (int) ($this->filters['bulan'] ?? now()->month);
 
-    protected ?string $description = 'Perbandingan pagu berlaku dengan realisasi anggaran kumulatif. Batang merah menandakan realisasi melebihi pagu.';
+        $items = app(AnggaranCalculator::class)->ambilPerbandinganPerIkk($tahun, $bulan);
+
+        $itemsCol  = collect($items);
+        $totalPagu = (float) $itemsCol->sum('pagu');
+        $totalReal = (float) $itemsCol->sum('realisasi');
+        $persen    = $totalPagu > 0 ? round(($totalReal / $totalPagu) * 100, 1) : 0;
+
+        $paguFormatted = 'Rp ' . number_format($totalPagu / 1000000000, 2, ',', '.') . ' M';
+        $realFormatted = 'Rp ' . number_format($totalReal / 1000000000, 2, ',', '.') . ' M';
+
+        return new HtmlString('
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em;">Pagu vs Realisasi Anggaran per IKK</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 0.74rem; font-weight: 800; background: rgba(52, 152, 219, 0.12); color: #0284c7; border: 1px solid rgba(52, 152, 219, 0.4); padding: 4px 12px; border-radius: 9999px;">
+                        Pagu Total: ' . $paguFormatted . '
+                    </span>
+                    <span style="font-size: 0.74rem; font-weight: 800; background: rgba(155, 89, 182, 0.12); color: #8e44ad; border: 1px solid rgba(155, 89, 182, 0.4); padding: 4px 12px; border-radius: 9999px;">
+                        Realisasi Total: ' . $realFormatted . ' (' . $persen . '%)
+                    </span>
+                </div>
+            </div>
+        ');
+    }
+
+    protected ?string $description = 'Perbandingan visual pagu DIPA terhadap realisasi anggaran kumulatif. Batang merah menandakan realisasi melebihi alokasi pagu.';
 
     protected static ?int $sort = 7;
 
@@ -36,42 +68,53 @@ class DashboardAnggaranPerIKK extends ChartWidget
         $items = app(AnggaranCalculator::class)
             ->ambilPerbandinganPerIkk($tahun, $bulan);
 
-        $labels        = [];
-        $namaIkkList   = [];
-        $dataPagu      = [];
-        $dataRealisasi = [];
-        $warnaRealisi  = [];
+        $labels          = [];
+        $namaIkkList     = [];
+        $dataPagu        = [];
+        $dataRealisasi   = [];
+        $warnaRealisasi  = [];
+        $borderRealisasi = [];
 
         foreach ($items as $item) {
             $labels[]        = $item['kode_ikk'];
             $namaIkkList[]   = $item['nama_ikk'];
             $dataPagu[]      = $item['pagu'];
             $dataRealisasi[] = $item['realisasi'];
-            $warnaRealisi[]  = $item['lebihi_pagu']
-                ? 'rgba(239, 68, 68, 0.9)'  // red-500
-                : 'rgba(79, 70, 229, 0.85)'; // indigo-600
+
+            if ($item['lebihi_pagu']) {
+                $warnaRealisasi[]  = 'rgba(244, 63, 94, 0.88)';  // Vibrant Rose Red (melebihi pagu)
+                $borderRealisasi[] = '#e11d48';
+            } else {
+                $warnaRealisasi[]  = 'rgba(155, 89, 182, 0.9)';  // Vibrant Amethyst Purple (serasi dengan donut chart!)
+                $borderRealisasi[] = '#8e44ad';
+            }
         }
 
         return [
             'datasets' => [
                 [
-                    'label'           => 'Pagu',
-                    'data'            => $dataPagu,
-                    'namaIkk'         => $namaIkkList,
-                    'backgroundColor' => 'rgba(203, 213, 225, 0.7)',
-                    'borderColor'     => '#94a3b8',
-                    'borderWidth'     => 1,
-                    'borderRadius'    => 6,
-                    'borderSkipped'   => false,
+                    'label'              => 'Pagu DIPA',
+                    'data'               => $dataPagu,
+                    'namaIkk'            => $namaIkkList,
+                    'backgroundColor'    => 'rgba(52, 152, 219, 0.22)', // Soft Sky Blue container (serasi dengan donut chart!)
+                    'borderColor'        => '#0284c7',
+                    'borderWidth'        => 1.5,
+                    'borderRadius'       => 6,
+                    'borderSkipped'      => false,
+                    'barPercentage'      => 0.78,
+                    'categoryPercentage' => 0.7,
                 ],
                 [
-                    'label'           => 'Realisasi',
-                    'data'            => $dataRealisasi,
-                    'namaIkk'         => $namaIkkList,
-                    'backgroundColor' => $warnaRealisi,
-                    'borderWidth'     => 0,
-                    'borderRadius'    => 6,
-                    'borderSkipped'   => false,
+                    'label'              => 'Realisasi Terserap',
+                    'data'               => $dataRealisasi,
+                    'namaIkk'            => $namaIkkList,
+                    'backgroundColor'    => $warnaRealisasi,
+                    'borderColor'        => $borderRealisasi,
+                    'borderWidth'        => 1.5,
+                    'borderRadius'       => 6,
+                    'borderSkipped'      => false,
+                    'barPercentage'      => 0.78,
+                    'categoryPercentage' => 0.7,
                 ],
             ],
             'labels' => $labels,
@@ -87,6 +130,7 @@ class DashboardAnggaranPerIKK extends ChartWidget
     {
         return RawJs::make(<<<JS
         {
+            indexAxis: 'y',
             interaction: {
                 mode: 'index',
                 intersect: false
@@ -100,37 +144,34 @@ class DashboardAnggaranPerIKK extends ChartWidget
                         usePointStyle: true,
                         pointStyle: 'circle',
                         boxWidth: 8,
-                        padding: 16,
-                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' },
+                        padding: 18,
+                        font: { size: 12, weight: '700', family: 'Plus Jakarta Sans' },
                         color: '#475569'
                     }
                 },
                 tooltip: {
                     enabled: true,
-                    backgroundColor: '#ffffff',
-                    titleColor: '#0f172a',
-                    bodyColor: '#334155',
-                    borderColor: '#e2e8f0',
+                    backgroundColor: '#0f172a',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
+                    borderColor: 'rgba(51, 65, 85, 0.8)',
                     borderWidth: 1,
-                    padding: { top: 12, bottom: 12, left: 14, right: 14 },
+                    padding: 14,
                     cornerRadius: 10,
                     displayColors: true,
                     boxWidth: 8,
                     boxHeight: 8,
                     usePointStyle: true,
-                    titleFont: { size: 12, weight: 'bold', family: 'Plus Jakarta Sans' },
-                    bodyFont: { size: 12, weight: '500', family: 'Plus Jakarta Sans' },
-                    boxPadding: 4,
+                    titleFont: { size: 13, weight: '800', family: 'Plus Jakarta Sans' },
+                    bodyFont: { size: 12, weight: '600', family: 'Plus Jakarta Sans' },
+                    boxPadding: 6,
                     callbacks: {
                         title: function(items) {
                             var item = items[0];
                             var kode = item.label;
                             var namaList = item.dataset.namaIkk || [];
                             var nama = namaList[item.dataIndex] || '';
-                            if (nama.length > 45) {
-                                nama = nama.substring(0, 42) + '...';
-                            }
-                            return kode + (nama ? ' (' + nama + ')' : '');
+                            return kode + (nama ? ' — ' + nama : '');
                         },
                         label: function(ctx) {
                             var val = ctx.raw || 0;
@@ -145,12 +186,19 @@ class DashboardAnggaranPerIKK extends ChartWidget
                             if (items.length >= 2) {
                                 var pagu = items[0].raw || 0;
                                 var real = items[1].raw || 0;
+                                var sisa = pagu - real;
+                                var sisaFormatted = new Intl.NumberFormat('id-ID', {
+                                    style: 'currency',
+                                    currency: 'IDR',
+                                    maximumFractionDigits: 0
+                                }).format(Math.abs(sisa));
+
                                 if (pagu > 0) {
                                     var pct = ((real / pagu) * 100).toFixed(1);
-                                    var note = real > pagu ? ' (Melebihi Pagu)' : '';
-                                    return ['Penyerapan : ' + pct + '%' + note];
+                                    var note = real > pagu ? ' ⚠️ Melebihi Pagu (' + sisaFormatted + ')' : ' • Sisa: ' + sisaFormatted;
+                                    return ['', '📊 Penyerapan : ' + pct + '%' + note];
                                 } else if (real > 0) {
-                                    return ['Penyerapan : >100% (Pagu Rp 0)'];
+                                    return ['', '📊 Penyerapan : >100% (Pagu Rp 0)'];
                                 }
                             }
                             return [];
@@ -160,20 +208,13 @@ class DashboardAnggaranPerIKK extends ChartWidget
             },
             scales: {
                 x: {
-                    grid: { display: false },
-                    ticks: {
-                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' },
-                        color: '#64748b'
-                    }
-                },
-                y: {
                     beginAtZero: true,
                     grid: {
-                        color: '#f1f5f9',
+                        color: 'rgba(226, 232, 240, 0.6)',
                         borderDash: [4, 4]
                     },
                     ticks: {
-                        font: { size: 11, family: 'Plus Jakarta Sans' },
+                        font: { size: 11, weight: '600', family: 'Plus Jakarta Sans' },
                         color: '#64748b',
                         callback: function(v) {
                             if (v >= 1000000000) {
@@ -184,12 +225,19 @@ class DashboardAnggaranPerIKK extends ChartWidget
                             return 'Rp ' + v;
                         }
                     }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 12, weight: '800', family: 'Plus Jakarta Sans' },
+                        color: '#334155'
+                    }
                 }
             },
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: 800,
+                duration: 900,
                 easing: 'easeInOutQuart'
             }
         }
@@ -198,6 +246,6 @@ class DashboardAnggaranPerIKK extends ChartWidget
 
     protected function getMaxHeight(): ?string
     {
-        return '380px';
+        return '450px';
     }
 }

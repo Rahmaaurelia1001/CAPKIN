@@ -14,6 +14,7 @@ use App\Models\RincianKerjasama;
 use App\Models\RincianNSPK;
 use App\Models\RincianPelatihan;
 use App\Models\TargetIkk;
+use App\Models\TargetPenarikanDana;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -88,6 +89,34 @@ class DataKinerja2026Seeder extends Seeder
             }
 
             // -------------------------------------------------------
+            // 3b. Target Penarikan Dana (Kurva S / RPD) 2026 (Jan s.d. Des)
+            // -------------------------------------------------------
+            $targetPenarikanBulanan = [
+                1  => 8.28,
+                2  => 16.55,
+                3  => 25.51,
+                4  => 33.79,
+                5  => 42.06,
+                6  => 50.34,
+                7  => 58.62,
+                8  => 66.89,
+                9  => 75.17,
+                10 => 83.44,
+                11 => 91.72,
+                12 => 100.00,
+            ];
+
+            foreach ($targetPenarikanBulanan as $bln => $pct) {
+                TargetPenarikanDana::updateOrCreate(
+                    ['tahun' => $tahun, 'bulan' => $bln],
+                    [
+                        'percent' => $pct,
+                        'user_id' => $katimUmper?->id,
+                    ]
+                );
+            }
+
+            // -------------------------------------------------------
             // 4. Pagu Anggaran 2026 per IKK (Sesuai Spreadsheet)
             // -------------------------------------------------------
             $paguData = [
@@ -129,7 +158,7 @@ class DataKinerja2026Seeder extends Seeder
             }
 
             // -------------------------------------------------------
-            // 5. Realisasi Anggaran Bulanan Jan s.d. Jul 2026 (Kumulatif)
+            // 5. Realisasi Anggaran Bulanan Jan s.d. Sep 2026 (Kumulatif)
             // -------------------------------------------------------
             // Hapus data anggaran tahun 2026 lama agar bersih
             AnggaranBulanan::where('tahun', $tahun)->delete();
@@ -137,13 +166,15 @@ class DataKinerja2026Seeder extends Seeder
             $realisasiBulananSemuaIKK = [
                 // IKK 20
                 'IKK 20' => [
-                    1 => ['realisasi' => 0,             'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
-                    2 => ['realisasi' => 510_150_000,   'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 1_658_742_245, 'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 5_070_024_890, 'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 6_567_500_000, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 7_718_000_750, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 8_758_342_645, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    1 => ['realisasi' => 0,              'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
+                    2 => ['realisasi' => 510_150_000,    'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3 => ['realisasi' => 1_658_742_245,  'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4 => ['realisasi' => 5_070_024_890,  'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5 => ['realisasi' => 6_567_500_000,  'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6 => ['realisasi' => 7_718_000_750,  'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7 => ['realisasi' => 8_758_342_645,  'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8 => ['realisasi' => 10_250_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9 => ['realisasi' => 12_500_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
                 ],
                 // IKK 21 (Bulan 1 belum ada nilai [-])
                 'IKK 21' => [
@@ -154,6 +185,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['realisasi' => 288_423_365,   'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
                     6 => ['realisasi' => 432_956_465,   'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
                     7 => ['realisasi' => 441_056_465,   'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8 => ['realisasi' => 480_000_000,   'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9 => ['realisasi' => 530_000_000,   'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
                 ],
                 // IKK 22
                 'IKK 22' => [
@@ -164,6 +197,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['realisasi' => 4_293_571_214, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
                     6 => ['realisasi' => 6_585_135_957, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
                     7 => ['realisasi' => 6_145_204_190, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026 (koreksi/revisi)'],
+                    8 => ['realisasi' => 7_150_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9 => ['realisasi' => 8_200_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
                 ],
                 // IKK 24
                 'IKK 24' => [
@@ -174,6 +209,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['realisasi' => 26_259_267_204, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
                     6 => ['realisasi' => 26_259_267_204, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
                     7 => ['realisasi' => 30_685_363_568, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8 => ['realisasi' => 32_500_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9 => ['realisasi' => 37_000_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
                 ],
                 // IKK 25
                 'IKK 25' => [
@@ -184,6 +221,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['realisasi' => 643_954_103, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
                     6 => ['realisasi' => 664_872_463, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
                     7 => ['realisasi' => 746_546_467, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8 => ['realisasi' => 850_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9 => ['realisasi' => 950_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
                 ],
                 // IKK 26
                 'IKK 26' => [
@@ -194,6 +233,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['realisasi' => 643_954_103, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
                     6 => ['realisasi' => 664_872_463, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
                     7 => ['realisasi' => 746_546_467, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8 => ['realisasi' => 850_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9 => ['realisasi' => 950_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
                 ],
                 // IKK 28
                 'IKK 28' => [
@@ -204,6 +245,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['realisasi' => 64_417_264, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
                     6 => ['realisasi' => 64_417_264, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
                     7 => ['realisasi' => 64_417_264, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8 => ['realisasi' => 75_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9 => ['realisasi' => 85_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
                 ],
             ];
 
@@ -233,7 +276,7 @@ class DataKinerja2026Seeder extends Seeder
 
             /*
              * 6.1 IKK 20 — Tunggal (Sum dari rincian_pelatihans.jumlah_peserta)
-             * Target: 7.050 Orang | Realisasi s.d. Juli: 5.308 Orang (75,29%)
+             * Target: 7.050 Orang | Realisasi s.d. September: 7.354 Orang (104,31%)
              */
             if ($ikk20 && $picAlvian) {
                 LaporanBulanan::where(['ikk_id' => $ikk20->id, 'tahun' => $tahun])
@@ -244,28 +287,63 @@ class DataKinerja2026Seeder extends Seeder
                     });
 
                 $pelatihanBulanan = [
+                    // Sesuai data matriks pelatihan Excel (Januari s.d. September 2026)
+                    // Nilai tiap bulan adalah delta/kegiatan berjalan yang jika diakumulasikan
+                    // menghasilkan total kumulatif persis sesuai tabel Excel:
+                    // Jan: 559 | Feb: 1736 | Mar: 2502 | Apr: 3061 | Mei: 3657 | Jun: 4695 | Jul: 5308 | Agu: 5913 | Sep: 7354
                     1 => [
-                        ['nama' => 'Diklat Kepemimpinan Pengawas Angk. I', 'dana' => 'PNBP', 'peserta' => 500, 'lulus' => 498, 'lk' => 300, 'pr' => 200],
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 559, 'lulus' => 559, 'lk' => 335, 'pr' => 224],
                     ],
                     2 => [
-                        ['nama' => 'Pelatihan Dasar CPNS Gelombang I', 'dana' => 'PNBP', 'peserta' => 700, 'lulus' => 695, 'lk' => 420, 'pr' => 280],
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 1071, 'lulus' => 1071, 'lk' => 643, 'pr' => 428],
+                        ['nama' => 'Barjas', 'dana' => 'RM', 'peserta' => 76, 'lulus' => 76, 'lk' => 46, 'pr' => 30],
+                        ['nama' => 'Pelatihan Audit BMN', 'dana' => 'RM', 'peserta' => 30, 'lulus' => 30, 'lk' => 18, 'pr' => 12],
                     ],
                     3 => [
-                        ['nama' => 'Pelatihan Teknis Perhubungan Darat', 'dana' => 'PNBP', 'peserta' => 500, 'lulus' => 498, 'lk' => 300, 'pr' => 200],
-                        ['nama' => 'Pelatihan Teknis Perhubungan Udara',  'dana' => 'RM',   'peserta' => 300, 'lulus' => 298, 'lk' => 180, 'pr' => 120],
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 644, 'lulus' => 644, 'lk' => 386, 'pr' => 258],
+                        ['nama' => 'Pelatihan Legislatif Drafting', 'dana' => 'RM', 'peserta' => 30, 'lulus' => 30, 'lk' => 18, 'pr' => 12],
+                        ['nama' => 'P3K (Pertolongan pertama pada kecelakaan)', 'dana' => 'RM', 'peserta' => 30, 'lulus' => 30, 'lk' => 18, 'pr' => 12],
+                        ['nama' => 'Pelatihan audit pengadaan Barjas', 'dana' => 'RM', 'peserta' => 32, 'lulus' => 32, 'lk' => 19, 'pr' => 13],
+                        ['nama' => 'KSP (Pelatihan pemanfaatan BMN dalam bentuk sewa dan kerja sama pemanfaatan tingkat dasar)', 'dana' => 'RM', 'peserta' => 30, 'lulus' => 30, 'lk' => 18, 'pr' => 12],
                     ],
                     4 => [
-                        ['nama' => 'Diklat Kepemimpinan Administrator Angk. II', 'dana' => 'PNBP', 'peserta' => 1100, 'lulus' => 1090, 'lk' => 660, 'pr' => 440],
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 480, 'lulus' => 480, 'lk' => 288, 'pr' => 192],
+                        ['nama' => 'PPK TIPE C', 'dana' => 'PNBP', 'peserta' => 48, 'lulus' => 48, 'lk' => 29, 'pr' => 19],
+                        ['nama' => 'PPK TIPE B', 'dana' => 'RM', 'peserta' => 16, 'lulus' => 16, 'lk' => 10, 'pr' => 6],
+                        ['nama' => 'QRMP', 'dana' => 'RM', 'peserta' => 15, 'lulus' => 15, 'lk' => 9, 'pr' => 6],
                     ],
                     5 => [
-                        ['nama' => 'Pelatihan Manajemen Transportasi Multimoda', 'dana' => 'PNBP', 'peserta' => 1200, 'lulus' => 1190, 'lk' => 720, 'pr' => 480],
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 490, 'lulus' => 490, 'lk' => 294, 'pr' => 196],
+                        ['nama' => 'Barjas', 'dana' => 'RM', 'peserta' => 40, 'lulus' => 40, 'lk' => 24, 'pr' => 16],
+                        ['nama' => 'ECM', 'dana' => 'RM', 'peserta' => 26, 'lulus' => 26, 'lk' => 16, 'pr' => 10],
+                        ['nama' => 'Pelatihan refleksi dan aktualisasi integritas', 'dana' => 'RM', 'peserta' => 40, 'lulus' => 40, 'lk' => 24, 'pr' => 16],
                     ],
                     6 => [
-                        ['nama' => 'Pelatihan Teknis Keselamatan Transportasi', 'dana' => 'PNBP', 'peserta' => 500, 'lulus' => 498, 'lk' => 300, 'pr' => 200],
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 840, 'lulus' => 840, 'lk' => 504, 'pr' => 336],
+                        ['nama' => 'Barjas', 'dana' => 'RM', 'peserta' => 36, 'lulus' => 36, 'lk' => 22, 'pr' => 14],
+                        ['nama' => 'PPK TIPE C', 'dana' => 'PNBP', 'peserta' => 26, 'lulus' => 26, 'lk' => 16, 'pr' => 10],
+                        ['nama' => 'Administrasi Perkantoran', 'dana' => 'RM', 'peserta' => 24, 'lulus' => 24, 'lk' => 14, 'pr' => 10],
+                        ['nama' => 'Pengelolaan arsip elektronik', 'dana' => 'RM', 'peserta' => 30, 'lulus' => 30, 'lk' => 18, 'pr' => 12],
+                        ['nama' => 'Pelatihan K3 Perkantoran', 'dana' => 'RM', 'peserta' => 35, 'lulus' => 35, 'lk' => 21, 'pr' => 14],
+                        ['nama' => 'Pelatihan Renstra', 'dana' => 'RM', 'peserta' => 47, 'lulus' => 47, 'lk' => 28, 'pr' => 19],
                     ],
                     7 => [
-                        ['nama' => 'Pelatihan Digitalisasi Layanan Transportasi', 'dana' => 'RM',   'peserta' => 258, 'lulus' => 255, 'lk' => 155, 'pr' => 103],
-                        ['nama' => 'Pelatihan Reformasi Birokrasi Angk. III',     'dana' => 'PNBP', 'peserta' => 250, 'lulus' => 248, 'lk' => 150, 'pr' => 100],
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 160, 'lulus' => 160, 'lk' => 96, 'pr' => 64],
+                        ['nama' => 'Barjas', 'dana' => 'RM', 'peserta' => 37, 'lulus' => 37, 'lk' => 22, 'pr' => 15],
+                        ['nama' => 'PPK TIPE C', 'dana' => 'PNBP', 'peserta' => 16, 'lulus' => 16, 'lk' => 10, 'pr' => 6],
+                        ['nama' => 'Orientasi Pegawai pemerintah perjanjian kerja (PPPK)', 'dana' => 'RM', 'peserta' => 400, 'lulus' => 400, 'lk' => 240, 'pr' => 160],
+                    ],
+                    8 => [
+                        ['nama' => 'Orientasi Pegawai pemerintah perjanjian kerja (PPPK)', 'dana' => 'RM', 'peserta' => 400, 'lulus' => 400, 'lk' => 240, 'pr' => 160],
+                        ['nama' => 'PKM', 'dana' => 'RM', 'peserta' => 60, 'lulus' => 60, 'lk' => 36, 'pr' => 24],
+                        ['nama' => 'PKA', 'dana' => 'PNBP', 'peserta' => 60, 'lulus' => 60, 'lk' => 36, 'pr' => 24],
+                        ['nama' => 'PKP', 'dana' => 'PNBP', 'peserta' => 85, 'lulus' => 85, 'lk' => 51, 'pr' => 34],
+                    ],
+                    9 => [
+                        ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'peserta' => 111, 'lulus' => 111, 'lk' => 67, 'pr' => 44],
+                        ['nama' => 'Barjas', 'dana' => 'RM', 'peserta' => 100, 'lulus' => 100, 'lk' => 60, 'pr' => 40],
+                        ['nama' => 'Orientasi Pegawai pemerintah perjanjian kerja (PPPK)', 'dana' => 'RM', 'peserta' => 1200, 'lulus' => 1200, 'lk' => 720, 'pr' => 480],
+                        ['nama' => 'Pelatihan aplikasi perkantoran', 'dana' => 'RM', 'peserta' => 30, 'lulus' => 30, 'lk' => 18, 'pr' => 12],
                     ],
                 ];
 
@@ -304,7 +382,7 @@ class DataKinerja2026Seeder extends Seeder
              * Target: 9 Dokumen
              * Jan-Mei: 0 Dokumen (0%)
              * Juni: 3 Dokumen (33,3%)
-             * Juli: 3 Dokumen kumulatif (33,3%)
+             * Juli-September: 3 Dokumen kumulatif (33,3%)
              */
             if ($ikk21 && $picArdian) {
                 LaporanBulanan::where(['ikk_id' => $ikk21->id, 'tahun' => $tahun])
@@ -326,6 +404,8 @@ class DataKinerja2026Seeder extends Seeder
                         ['jenis' => 'Norma',    'nama' => 'Norma Pelaksanaan Uji Kompetensi Aparatur',            'ket' => 'Selesai disusun dan divalidasi'],
                     ],
                     7 => [], // Tidak ada dokumen baru di Juli, kumulatif tetap 3 dokumen
+                    8 => [], // Tidak ada dokumen baru di Agustus, kumulatif tetap 3 dokumen
+                    9 => [], // Tidak ada dokumen baru di September, kumulatif tetap 3 dokumen
                 ];
 
                 foreach ($nspkBulanan as $bulan => $daftarNspk) {
@@ -361,7 +441,7 @@ class DataKinerja2026Seeder extends Seeder
              * 6.3 IKK 22 — Nilai Indeks Profesionalitas ASN (Field realisasi)
              * Target: 77.00
              * Jan: 0.00
-             * Feb s.d. Jul: 85.53 (Capaian: 111,08%)
+             * Feb s.d. Sep: 85.53 (Capaian: 111,08%)
              */
             if ($ikk22 && $picIndah) {
                 LaporanBulanan::where(['ikk_id' => $ikk22->id, 'tahun' => $tahun])
@@ -375,6 +455,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => 85.53,
                     6 => 85.53,
                     7 => 85.53,
+                    8 => 85.53,
+                    9 => 85.53,
                 ];
 
                 foreach ($nilaiIkk22 as $bulan => $nilai) {
@@ -401,7 +483,8 @@ class DataKinerja2026Seeder extends Seeder
              * 6.4 IKK 24 — Gabungan Akuntabilitas (Bobot A: 50%, Bobot B: 50%)
              * Target: 100%
              * Jan - Mei: Unit: 0/13, Layanan: 0/13 -> 0%
-             * Jun - Jul: Unit: 7/13 (26,92%), Layanan: 7/13 (26,92%) -> Total: 53,85%
+             * Jun - Agu: Unit: 7/13 (26,92%), Layanan: 7/13 (26,92%) -> Total: 53,85%
+             * Sep: Unit: 10/13 (38,46%), Layanan: 10/13 (38,46%) -> Total: 76,92%
              */
             if ($ikk24 && $picIndah) {
                 $kompA24 = IkkKomponen::where('ikk_id', $ikk24->id)->where('kode_komponen', 'A')->first();
@@ -418,6 +501,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['a_pem' => 0, 'a_peny' => 13, 'b_pem' => 0, 'b_peny' => 13],
                     6 => ['a_pem' => 7, 'a_peny' => 13, 'b_pem' => 7, 'b_peny' => 13],
                     7 => ['a_pem' => 7, 'a_peny' => 13, 'b_pem' => 7, 'b_peny' => 13],
+                    8 => ['a_pem' => 7, 'a_peny' => 13, 'b_pem' => 7, 'b_peny' => 13],
+                    9 => ['a_pem' => 10, 'a_peny' => 13, 'b_pem' => 10, 'b_peny' => 13],
                 ];
 
                 foreach ($komponenIkk24Bulanan as $bulan => $k) {
@@ -430,7 +515,7 @@ class DataKinerja2026Seeder extends Seeder
                         'realisasi'      => null,  // ← dihitung otomatis oleh sistem dari AngkaKinerja berbobot
                         'status'         => 'final',
                         'narasi_capaian' => $k['a_pem'] > 0
-                            ? "Pemenuhan akuntabilitas: {$k['a_pem']}/{$k['a_peny']} unit dan {$k['b_pem']}/{$k['b_peny']} layanan terlaksana (Capaian 53,85%)."
+                            ? sprintf("Pemenuhan akuntabilitas: %d/%d unit dan %d/%d layanan terlaksana (Capaian %.2f%%).", $k['a_pem'], $k['a_peny'], $k['b_pem'], $k['b_peny'], (($k['a_pem'] / $k['a_peny']) * 50 + ($k['b_pem'] / $k['b_peny']) * 50))
                             : "Proses evaluasi pemenuhan standar akuntabilitas pada unit kerja.",
                         'kendala'        => 'Sebagian unit masih merampungkan kelengkapan dokumen pendukung akuntabilitas.',
                         'tindak_lanjut'  => 'Pendampingan langsung ke unit yang belum memenuhi target standar layanan.',
@@ -463,6 +548,8 @@ class DataKinerja2026Seeder extends Seeder
              * Jan - Mar: 0.00
              * Apr - Jun: 96.80
              * Jul: 95.71
+             * Agu: 95.57
+             * Sep: 95.82
              */
             if ($ikk25 && $picSuwarman) {
                 LaporanBulanan::where(['ikk_id' => $ikk25->id, 'tahun' => $tahun])
@@ -476,6 +563,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => 96.80,
                     6 => 96.80,
                     7 => 95.71,
+                    8 => 95.57,
+                    9 => 95.82,
                 ];
 
                 foreach ($nilaiIkk25 as $bulan => $nilai) {
@@ -503,7 +592,7 @@ class DataKinerja2026Seeder extends Seeder
              * Target: 78.50
              * Jan - Mar: null (tanda - / belum ada nilai)
              * Apr - Jun: 84.66
-             * Jul: 85.40
+             * Jul - Sep: 85.40
              */
             if ($ikk26 && $picLusi) {
                 LaporanBulanan::where(['ikk_id' => $ikk26->id, 'tahun' => $tahun])
@@ -517,6 +606,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => 84.66,
                     6 => 84.66,
                     7 => 85.40,
+                    8 => 85.40,
+                    9 => 85.40,
                 ];
 
                 foreach ($nilaiIkk26 as $bulan => $nilai) {
@@ -543,7 +634,8 @@ class DataKinerja2026Seeder extends Seeder
              * 6.7 IKK 28 — Gabungan Kerja Sama dan Kemitraan (Bobot A: 40%, Bobot B: 60%)
              * Target: 100%
              * Jan - Mei: A: 0/2, B: 0/2 -> 0%
-             * Jun - Jul: A: 1/2 (20%), B: 1/2 (30%) -> Total: 50%
+             * Jun - Agu: A: 1/2 (20%), B: 1/2 (30%) -> Total: 50%
+             * Sep: A: 2/2 (40%), B: 2/2 (60%) -> Total: 100%
              */
             if ($ikk28 && $picLusi) {
                 $kompA28 = IkkKomponen::where('ikk_id', $ikk28->id)->where('kode_komponen', 'A')->first();
@@ -565,6 +657,8 @@ class DataKinerja2026Seeder extends Seeder
                     5 => ['a_pem' => 0, 'a_peny' => 2, 'b_pem' => 0, 'b_peny' => 2],
                     6 => ['a_pem' => 1, 'a_peny' => 2, 'b_pem' => 1, 'b_peny' => 2],
                     7 => ['a_pem' => 1, 'a_peny' => 2, 'b_pem' => 1, 'b_peny' => 2],
+                    8 => ['a_pem' => 1, 'a_peny' => 2, 'b_pem' => 1, 'b_peny' => 2],
+                    9 => ['a_pem' => 2, 'a_peny' => 2, 'b_pem' => 2, 'b_peny' => 2],
                 ];
 
                 foreach ($komponenIkk28Bulanan as $bulan => $k) {
@@ -577,7 +671,7 @@ class DataKinerja2026Seeder extends Seeder
                         'realisasi'      => null,  // ← dihitung otomatis oleh sistem dari AngkaKinerja berbobot
                         'status'         => 'final',
                         'narasi_capaian' => $k['a_pem'] > 0
-                            ? "Pelaksanaan kerja sama: {$k['a_pem']}/{$k['a_peny']} ditindaklanjuti dan {$k['b_pem']}/{$k['b_peny']} disusun (Capaian 50%)."
+                            ? sprintf("Pelaksanaan kerja sama: %d/%d ditindaklanjuti dan %d/%d disusun (Capaian %.0f%%).", $k['a_pem'], $k['a_peny'], $k['b_pem'], $k['b_peny'], (($k['a_pem'] / $k['a_peny']) * 40 + ($k['b_pem'] / $k['b_peny']) * 60))
                             : "Penjajakan dan koordinasi draft naskah kerja sama dengan mitra kerja.",
                         'kendala'        => 'Proses sinkronisasi klausul kerja sama dengan mitra eksternal.',
                         'tindak_lanjut'  => 'Finalisasi naskah PKS dan percepatan penandatanganan di semester II.',

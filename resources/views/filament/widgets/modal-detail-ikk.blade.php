@@ -5,7 +5,8 @@
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
             <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Target Tahunan</div>
             <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 4px;">
-                {{ number_format($dataDetail['target'], 0, ',', '.') }}
+                @php $decTargetM = (str_contains($dataDetail['satuan'] ?? '', '%') || stripos($dataDetail['satuan'] ?? '', 'nilai') !== false || stripos($dataDetail['satuan'] ?? '', 'indeks') !== false || stripos($dataDetail['satuan'] ?? '', 'poin') !== false || ($dataDetail['target'] != (int)$dataDetail['target'])) ? 2 : 0; @endphp
+                {{ number_format($dataDetail['target'], $decTargetM, ',', '.') }}
                 <span style="font-size: 12px; font-weight: 500; color: #64748b;">{{ $dataDetail['satuan'] }}</span>
             </div>
             <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Target DIPA TA {{ $tahun }}</div>
@@ -14,7 +15,8 @@
         <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
             <div style="font-size: 11px; font-weight: 600; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px;">Realisasi Kinerja</div>
             <div style="font-size: 20px; font-weight: 800; color: #312e81; margin-top: 4px;">
-                {{ number_format($dataDetail['realisasi_kinerja'], 2, ',', '.') }}
+                @php $decSatuanM = (str_contains($dataDetail['satuan'] ?? '', '%') || stripos($dataDetail['satuan'] ?? '', 'indeks') !== false || stripos($dataDetail['satuan'] ?? '', 'nilai') !== false || stripos($dataDetail['satuan'] ?? '', 'poin') !== false) ? 2 : 0; @endphp
+                {{ number_format($dataDetail['realisasi_kinerja'], $decSatuanM, ',', '.') }}
                 <span style="font-size: 12px; font-weight: 500; color: #6366f1;">{{ $dataDetail['satuan'] }}</span>
             </div>
             <div style="font-size: 12px; font-weight: 700; color: {{ $dataDetail['capaian_kinerja'] >= 100 ? '#15803d' : ($dataDetail['capaian_kinerja'] >= 70 ? '#2563eb' : '#dc2626') }}; margin-top: 4px;">
@@ -199,9 +201,13 @@
                             <td style="padding: 10px 14px; font-weight: 600; color: #0f172a;">
                                 {{ $row['nama_bulan'] }}
                             </td>
-                            <td style="padding: 10px 14px; text-align: center; font-weight: 500;">
+                                                        <td style="padding: 10px 14px; text-align: center; font-weight: 500;">
                                 @if($row['realisasi_kinerja'] !== null)
-                                    <span style="font-weight: 600; color: #1e293b;">{{ number_format($row['realisasi_kinerja'], 2, ',', '.') }}</span>
+                                    @php
+                                        $satuanM = $dataDetail['satuan'] ?? '';
+                                        $decM = (str_contains($satuanM, '%') || stripos($satuanM, 'indeks') !== false || stripos($satuanM, 'nilai') !== false || stripos($satuanM, 'poin') !== false) ? 2 : 0;
+                                    @endphp
+                                    <span style="font-weight: 600; color: #1e293b;">{{ number_format($row['realisasi_kinerja'], $decM, ',', '.') }}</span>
                                     <span style="font-size: 10px; color: #64748b;">{{ $dataDetail['satuan'] }}</span>
                                 @else
                                     <span style="color: #cbd5e1;">—</span>
@@ -215,7 +221,7 @@
                                         $txC = $cVal >= 100 ? '#15803d' : ($cVal >= 70 ? '#1d4ed8' : '#b91c1c');
                                     @endphp
                                     <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: {{ $bgC }}; color: {{ $txC }};">
-                                        {{ number_format($cVal, 1, ',', '.') }}%
+                                        {{ number_format($cVal, 2, ',', '.') }}%
                                     </span>
                                 @else
                                     <span style="color: #cbd5e1;">—</span>

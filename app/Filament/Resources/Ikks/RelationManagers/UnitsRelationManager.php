@@ -25,12 +25,6 @@ class UnitsRelationManager extends RelationManager
                     ->label('Nama Unit Kerja')
                     ->searchable()
                     ->sortable(),
-
-                TextColumn::make('users_count')
-                    ->counts('users')
-                    ->label('Jumlah Pegawai')
-                    ->badge()
-                    ->color('gray'),
             ])
             ->headerActions([
                 AttachAction::make()

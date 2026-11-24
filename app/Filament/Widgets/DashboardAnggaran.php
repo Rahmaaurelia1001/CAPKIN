@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Services\AnggaranCalculator;
+use App\Services\TargetPenarikanService;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -18,12 +19,12 @@ class DashboardAnggaran extends ChartWidget
         return new HtmlString('
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span style="font-weight: 700;">Penyerapan Anggaran per Bulan</span>
-                <span style="font-size: 0.78rem; font-weight: 700; color: #dc2626;">Target 100%</span>
+                <span style="font-size: 0.78rem; font-weight: 700; color: #dc2626;">Target Akhir 100%</span>
             </div>
         ');
     }
 
-    protected ?string $description = 'Realisasi penyerapan anggaran kumulatif terhadap target 100%.';
+    protected ?string $description = 'Perbandingan kurva realisasi penyerapan anggaran kumulatif terhadap target penarikan dana (RPD).';
 
     protected static ?int $sort = 5;
 
@@ -61,9 +62,15 @@ class DashboardAnggaran extends ChartWidget
         $dataPenyerapanKum  = [];
         $dataTarget         = [];
 
+        // Fetch target penarikan dana percentages for the selected year
+        $targetService = app(TargetPenarikanService::class);
+        $targetPerMonth = $targetService->getTargetByYear($tahun); // [1=>8.28, 2=>16.55, ...]
+
         for ($b = 1; $b <= 12; $b++) {
-            $labels[]     = $shortMonths[$b - 1];
-            $dataTarget[] = 100;
+            $labels[] = $shortMonths[$b - 1];
+
+            // Use target percentage if defined, otherwise null so it doesn't plunge to 0
+            $dataTarget[] = isset($targetPerMonth[$b]) ? (float) $targetPerMonth[$b] : null;
 
             if ($b <= min($bulanFilter, $maxBulanData)) {
                 $kumulatif = $tren['persentase_penyerapan'][$b - 1] ?? 0;
@@ -76,45 +83,40 @@ class DashboardAnggaran extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label'                => 'Kurva S (%)',
+                    'label'                => 'Realisasi Kumulatif (%)',
                     'data'                 => $dataPenyerapanKum,
                     'type'                 => 'line',
                     'fill'                 => false,
-                    'borderColor'          => '#4f46e5', // Deep Indigo Kurva S
-                    'backgroundColor'      => '#4f46e5',
+                    'borderColor'          => '#2563eb', // Vibrant Royal Blue
+                    'backgroundColor'      => '#2563eb',
                     'borderWidth'          => 3,
-                    'tension'              => 0.25,      // Kurva S halus menghubungkan ujung bar
+                    'tension'              => 0.25,
+                    'pointStyle'           => 'circle',
+                    'pointRadius'          => 5,
+                    'pointHoverRadius'     => 7,
                     'pointBackgroundColor' => '#ffffff',
-                    'pointBorderColor'     => '#4f46e5',
-                    'pointRadius'          => 6,
-                    'pointHoverRadius'     => 8,
+                    'pointBorderColor'     => '#2563eb',
                     'pointBorderWidth'     => 2.5,
                     'order'                => 1,
+                    'spanGaps'             => false,
                 ],
                 [
-                    'label'                => 'Realisasi Kumulatif (%)',
-                    'data'                 => $dataPenyerapanKum,
-                    'type'                 => 'bar',
-                    'backgroundColor'      => 'rgba(99, 102, 241, 0.35)', // Barchart lama dengan transparansi elegan
-                    'hoverBackgroundColor' => 'rgba(99, 102, 241, 0.65)',
-                    'borderColor'          => '#6366f1',
-                    'borderWidth'          => 1.5,
-                    'borderRadius'         => 6,
-                    'borderSkipped'        => false,
-                    'barPercentage'        => 0.65,
+                    'label'                => 'Target Penarikan Dana (%)',
+                    'data'                 => $dataTarget,
+                    'type'                 => 'line',
+                    'fill'                 => false,
+                    'borderColor'          => '#059669', // Emerald Green yang segar, kontras, dan solid
+                    'backgroundColor'      => '#059669',
+                    'borderWidth'          => 2.5,
+                    'tension'              => 0.25,
+                    'pointStyle'           => 'triangle', // Titik Segitiga agar tetap berbeda dengan lingkaran
+                    'pointRadius'          => 6,
+                    'pointHoverRadius'     => 8,
+                    'pointBackgroundColor' => '#059669',
+                    'pointBorderColor'     => '#ffffff',
+                    'pointBorderWidth'     => 2,
                     'order'                => 2,
-                ],
-                [
-                    'label'            => 'Target 100%',
-                    'data'             => $dataTarget,
-                    'type'             => 'line',
-                    'fill'             => false,
-                    'borderColor'      => '#f43f5e',
-                    'borderWidth'      => 1.5,
-                    'borderDash'       => [6, 6],
-                    'pointRadius'      => 0,
-                    'pointHoverRadius' => 0,
-                    'order'            => 3,
+                    'spanGaps'             => true,
                 ],
             ],
             'labels' => $labels,
@@ -123,7 +125,7 @@ class DashboardAnggaran extends ChartWidget
 
     protected function getType(): string
     {
-        return 'bar';
+        return 'line';
     }
 
     protected function getOptions(): RawJs
@@ -149,26 +151,47 @@ class DashboardAnggaran extends ChartWidget
                     enabled: true,
                     backgroundColor: '#ffffff',
                     titleColor: '#0f172a',
-                    bodyColor: '#059669',
-                    borderColor: '#e2e8f0',
+                    bodyColor: '#334155',
+                    footerColor: '#0f172a',
+                    borderColor: '#cbd5e1',
                     borderWidth: 1,
                     padding: { top: 10, bottom: 10, left: 14, right: 14 },
                     cornerRadius: 10,
-                    displayColors: false,
+                    displayColors: true,
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    usePointStyle: true,
                     titleFont: { size: 13, weight: 'bold', family: 'Plus Jakarta Sans' },
-                    bodyFont: { size: 12, weight: '600', family: 'Plus Jakarta Sans' },
-                    boxPadding: 4,
+                    bodyFont: { size: 12, weight: '500', family: 'Plus Jakarta Sans' },
+                    footerFont: { size: 12, weight: '700', family: 'Plus Jakarta Sans' },
+                    boxPadding: 6,
                     callbacks: {
                         title: function(items) {
-                            return items[0].label;
+                            return 'Bulan: ' + items[0].label;
                         },
                         label: function(item) {
-                            if (item.dataset.label === 'Target 100%') {
-                                return null;
-                            }
                             var val = item.parsed.y;
                             if (val === null || val === undefined) return null;
-                            return 'Penyerapan : ' + Number(val).toFixed(2) + '%';
+                            return ' ' + item.dataset.label + ': ' + Number(val).toFixed(2) + '%';
+                        },
+                        footer: function(items) {
+                            var realisasi = null;
+                            var target = null;
+                            for (var i = 0; i < items.length; i++) {
+                                if (items[i].dataset.label.indexOf('Realisasi') !== -1) {
+                                    realisasi = items[i].parsed.y;
+                                }
+                                if (items[i].dataset.label.indexOf('Target Penarikan') !== -1) {
+                                    target = items[i].parsed.y;
+                                }
+                            }
+                            if (realisasi !== null && target !== null && target > 0) {
+                                var diff = realisasi - target;
+                                var sign = diff >= 0 ? '+' : '';
+                                var status = diff >= 0 ? ' (Sesuai / Melampaui)' : ' (Di Bawah Target)';
+                                return 'Deviasi: ' + sign + diff.toFixed(2) + '%' + status;
+                            }
+                            return '';
                         }
                     }
                 }

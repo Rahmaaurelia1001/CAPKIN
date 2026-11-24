@@ -18,10 +18,10 @@ class IkkDetailVisualizer
         $satuanTampil = match ($ikk->kode_ikk) {
             'IKK 20' => 'Orang',
             'IKK 21' => 'Dokumen',
-            'IKK 22' => 'Indeks',
+            'IKK 22' => 'Nilai',
             'IKK 24' => '%',
-            'IKK 25' => 'Poin',
-            'IKK 26' => 'Poin',
+            'IKK 25' => 'Nilai',
+            'IKK 26' => 'Nilai',
             'IKK 28' => '%',
             default  => $ikk->satuan ?? '',
         };
@@ -188,6 +188,132 @@ class IkkDetailVisualizer
             'plot_y_top'          => $plotYTop,
             'plot_y_bottom'       => $plotYBottom,
             'plot_y_height'       => $plotYHeight,
+            'matriks_pelatihan'   => $ikk->kode_ikk === 'IKK 20' ? self::ambilMatriksPelatihan($tahun) : null,
+        ];
+    }
+
+    public static function ambilMatriksPelatihan(int $tahun = 2026): array
+    {
+        $masterPelatihan = ($tahun === 2026) ? [
+            ['nama' => 'Latsar', 'dana' => 'PNBP/RM', 'start_bulan' => 1],
+            ['nama' => 'Barjas', 'dana' => 'RM', 'start_bulan' => 2],
+            ['nama' => 'Pelatihan Audit BMN', 'dana' => 'RM', 'start_bulan' => 2],
+            ['nama' => 'Pelatihan Legislatif Drafting', 'dana' => 'RM', 'start_bulan' => 3],
+            ['nama' => 'P3K (Pertolongan pertama pada kecelakaan)', 'dana' => 'RM', 'start_bulan' => 3],
+            ['nama' => 'Pelatihan audit pengadaan Barjas', 'dana' => 'RM', 'start_bulan' => 3],
+            ['nama' => 'KSP (Pelatihan pemanfaatan BMN dalam bentuk sewa dan kerja sama pemanfaatan tingkat dasar)', 'dana' => 'RM', 'start_bulan' => 3],
+            ['nama' => 'PPK TIPE C', 'dana' => 'PNBP', 'start_bulan' => 4],
+            ['nama' => 'PPK TIPE B', 'dana' => 'RM', 'start_bulan' => 4],
+            ['nama' => 'QRMP', 'dana' => 'RM', 'start_bulan' => 4],
+            ['nama' => 'ECM', 'dana' => 'RM', 'start_bulan' => 5],
+            ['nama' => 'Pelatihan refleksi dan aktualisasi integritas', 'dana' => 'RM', 'start_bulan' => 5],
+            ['nama' => 'Administrasi Perkantoran', 'dana' => 'RM', 'start_bulan' => 6],
+            ['nama' => 'Pengelolaan arsip elektronik', 'dana' => 'RM', 'start_bulan' => 6],
+            ['nama' => 'Pelatihan K3 Perkantoran', 'dana' => 'RM', 'start_bulan' => 6],
+            ['nama' => 'Pelatihan Renstra', 'dana' => 'RM', 'start_bulan' => 6],
+            ['nama' => 'Orientasi Pegawai pemerintah perjanjian kerja (PPPK)', 'dana' => 'RM', 'start_bulan' => 7],
+            ['nama' => 'PKM', 'dana' => 'RM', 'start_bulan' => 8],
+            ['nama' => 'PKA', 'dana' => 'PNBP', 'start_bulan' => 8],
+            ['nama' => 'PKP', 'dana' => 'PNBP', 'start_bulan' => 8],
+            ['nama' => 'Diklat fungsional perjenjangan PBJ ahli madya', 'dana' => 'RM', 'start_bulan' => 10],
+            ['nama' => 'Pelatihan aplikasi perkantoran', 'dana' => 'RM', 'start_bulan' => 9],
+            ['nama' => 'Pengelolaan pembelajaran digital', 'dana' => 'RM', 'start_bulan' => 10],
+        ] : [];
+
+        $ikk20 = Ikk::where('kode_ikk', 'IKK 20')->first();
+        if (! $ikk20) {
+            return ['rows' => [], 'totals' => array_fill(1, 12, null), 'max_bulan' => 0];
+        }
+
+        $laporans = LaporanBulanan::where('ikk_id', $ikk20->id)
+            ->where('tahun', $tahun)
+            ->where('status', 'final')
+            ->with('rincianPelatihans')
+            ->orderBy('bulan')
+            ->get();
+
+        $maxBulan = (int) ($laporans->max('bulan') ?? 0);
+
+        $monthlyDeltas = [];
+        $sumberDanaMap = [];
+        $recordedNames = [];
+
+        foreach ($laporans as $lap) {
+            foreach ($lap->rincianPelatihans as $rp) {
+                $nama = trim($rp->nama_pelatihan);
+                $monthlyDeltas[$nama][$lap->bulan] = ($monthlyDeltas[$nama][$lap->bulan] ?? 0) + (int) $rp->jumlah_peserta;
+                if (!isset($sumberDanaMap[$nama]) && !empty($rp->sumber_dana)) {
+                    $sumberDanaMap[$nama] = $rp->sumber_dana;
+                }
+                $recordedNames[$nama] = true;
+            }
+        }
+
+        $allList = $masterPelatihan;
+        foreach (array_keys($recordedNames) as $recName) {
+            $found = false;
+            foreach ($masterPelatihan as $mp) {
+                if (strcasecmp($mp['nama'], $recName) === 0) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (! $found) {
+                $firstBulan = 1;
+                for ($b = 1; $b <= 12; $b++) {
+                    if (isset($monthlyDeltas[$recName][$b]) && $monthlyDeltas[$recName][$b] > 0) {
+                        $firstBulan = $b;
+                        break;
+                    }
+                }
+                $allList[] = [
+                    'nama' => $recName,
+                    'dana' => $sumberDanaMap[$recName] ?? 'RM',
+                    'start_bulan' => $firstBulan,
+                ];
+            }
+        }
+
+        $tableRows = [];
+        $monthlyTotals = array_fill(1, 12, null);
+        if ($maxBulan > 0) {
+            for ($b = 1; $b <= $maxBulan; $b++) {
+                $monthlyTotals[$b] = 0;
+            }
+        }
+
+        foreach ($allList as $item) {
+            $nama = $item['nama'];
+            $dana = $sumberDanaMap[$nama] ?? $item['dana'];
+            $startBulan = $item['start_bulan'];
+
+            $rowBulan = [];
+            $cum = 0;
+            for ($b = 1; $b <= 12; $b++) {
+                if ($b <= $maxBulan) {
+                    $cum += $monthlyDeltas[$nama][$b] ?? 0;
+                    if ($cum > 0 && $b >= $startBulan) {
+                        $rowBulan[$b] = $cum;
+                        $monthlyTotals[$b] += $cum;
+                    } else {
+                        $rowBulan[$b] = null;
+                    }
+                } else {
+                    $rowBulan[$b] = null;
+                }
+            }
+
+            $tableRows[] = [
+                'nama'  => $nama,
+                'dana'  => $dana,
+                'bulan' => $rowBulan,
+            ];
+        }
+
+        return [
+            'rows'      => $tableRows,
+            'totals'    => $monthlyTotals,
+            'max_bulan' => $maxBulan,
         ];
     }
 }

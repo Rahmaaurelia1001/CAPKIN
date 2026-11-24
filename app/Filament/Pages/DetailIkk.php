@@ -25,7 +25,7 @@ class DetailIkk extends Page
     public ?int $record = null;
     public ?Ikk $ikk = null;
     public int $tahun = 2026;
-    public int $bulan = 7;
+    public int $bulan = 8;
     public array $dataDetail = [];
 
     public function mount($record = null): void
@@ -33,8 +33,13 @@ class DetailIkk extends Page
         $ikkId = $record ?? request()->query('ikk_id') ?? Ikk::where('is_active', true)->first()?->id;
         $this->ikk = Ikk::findOrFail($ikkId);
         $this->record = $this->ikk->id;
-        $this->tahun = (int) request()->query('tahun', 2026);
-        $this->bulan = (int) request()->query('bulan', 7);
+        $this->tahun = (int) request()->query('tahun', now()->year);
+        
+        $latestBulan = (int) (\App\Models\LaporanBulanan::where('ikk_id', $this->record)
+            ->where('tahun', $this->tahun)
+            ->where('status', 'final')
+            ->max('bulan') ?? now()->month);
+        $this->bulan = (int) request()->query('bulan', $latestBulan ?: 1);
 
         $this->loadData();
     }

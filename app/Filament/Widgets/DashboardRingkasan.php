@@ -14,6 +14,29 @@ class DashboardRingkasan extends StatsOverviewWidget
 
     protected static ?int $sort = 1;
 
+    protected int | string | array $columnSpan = 'full';
+
+    protected function getColumns(): int
+    {
+        return 4;
+    }
+
+    // ── Gradient identik dengan 4 kartu di detail-ikk.blade.php ──
+    private const GRADIENTS = [
+        'c1' => [   // Ocean Blue (c1)
+            'style'  => 'background: linear-gradient(135deg, #1e3a8a 0%, #1d6fbd 60%, #0284c7 100%) !important; box-shadow: 0 10px 28px -4px rgba(2,132,199,0.5), inset 0 1px 0 rgba(255,255,255,0.15) !important; border-radius: 18px !important; border: 1px solid rgba(255,255,255,0.22) !important; color: #fff !important;',
+        ],
+        'c2' => [   // Indigo Violet (c2)
+            'style'  => 'background: linear-gradient(135deg, #4338ca 0%, #6366f1 60%, #8b5cf6 100%) !important; box-shadow: 0 10px 28px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15) !important; border-radius: 18px !important; border: 1px solid rgba(255,255,255,0.22) !important; color: #fff !important;',
+        ],
+        'c3' => [   // Amber Gold (c3)
+            'style'  => 'background: linear-gradient(135deg, #92400e 0%, #d97706 60%, #f59e0b 100%) !important; box-shadow: 0 10px 28px -4px rgba(245,158,11,0.5), inset 0 1px 0 rgba(255,255,255,0.15) !important; border-radius: 18px !important; border: 1px solid rgba(255,255,255,0.22) !important; color: #fff !important;',
+        ],
+        'c4' => [   // Emerald Green (c4)
+            'style'  => 'background: linear-gradient(135deg, #064e3b 0%, #059669 60%, #10b981 100%) !important; box-shadow: 0 10px 28px -4px rgba(16,185,129,0.5), inset 0 1px 0 rgba(255,255,255,0.15) !important; border-radius: 18px !important; border: 1px solid rgba(255,255,255,0.22) !important; color: #fff !important;',
+        ],
+    ];
+
     protected function getStats(): array
     {
         $user  = auth()->user();
@@ -51,26 +74,30 @@ class DashboardRingkasan extends StatsOverviewWidget
             Stat::make('Draf', $jumlahDraft . ' Laporan')
                 ->description('Laporan belum diajukan')
                 ->descriptionIcon('heroicon-m-pencil-square')
-                ->color('gray')
-                ->url($laporanUrl),
+                ->color('primary')
+                ->url($laporanUrl)
+                ->extraAttributes(['style' => self::GRADIENTS['c1']['style']]),
 
             Stat::make('Menunggu', $jumlahDalamProses . ' Laporan')
                 ->description('Menunggu persetujuan pejabat')
                 ->descriptionIcon('heroicon-m-clock')
-                ->color($jumlahDalamProses > 0 ? 'warning' : 'gray')
-                ->url($laporanUrl),
+                ->color('warning')
+                ->url($laporanUrl)
+                ->extraAttributes(['style' => self::GRADIENTS['c2']['style']]),
 
             Stat::make('Ditolak / Revisi', $jumlahPerluRevisi . ' Laporan')
                 ->description($jumlahPerluRevisi > 0 ? 'Perlu perbaikan segera' : 'Tidak ada laporan ditolak')
                 ->descriptionIcon($jumlahPerluRevisi > 0 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
-                ->color($jumlahPerluRevisi > 0 ? 'danger' : 'gray')
-                ->url($laporanUrl),
+                ->color('danger')
+                ->url($laporanUrl)
+                ->extraAttributes(['style' => self::GRADIENTS['c3']['style']]),
 
             Stat::make('Final', $jumlahFinal . ' Laporan')
                 ->description('Telah disetujui Kapus')
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success')
-                ->url($laporanUrl),
+                ->url($laporanUrl)
+                ->extraAttributes(['style' => self::GRADIENTS['c4']['style']]),
         ];
     }
 
@@ -111,23 +138,27 @@ class DashboardRingkasan extends StatsOverviewWidget
             Stat::make('Total Indikator', (string) $jumlahIkkAktif . ' IKK')
                 ->description('Indikator aktif TA ' . $tahun)
                 ->descriptionIcon('heroicon-m-rectangle-stack')
-                ->color('primary'),
+                ->color('primary')
+                ->extraAttributes(['style' => self::GRADIENTS['c1']['style']]),
 
             Stat::make('Laporan Disahkan', (string) $jumlahFinal . ' Laporan')
                 ->description("Status final s.d. {$namaBulan}")
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success')
-                ->url($laporanUrl),
+                ->url($laporanUrl)
+                ->extraAttributes(['style' => self::GRADIENTS['c2']['style']]),
 
             Stat::make("Realisasi Anggaran s.d. {$namaBulan}", $formatRingkas($realisasiAnggaran))
                 ->description('dari pagu ' . $formatRingkas($totalPagu))
                 ->descriptionIcon('heroicon-m-credit-card')
-                ->color('info'),
+                ->color('warning')
+                ->extraAttributes(['style' => self::GRADIENTS['c3']['style']]),
 
             Stat::make('Penyerapan Anggaran', number_format($persentasePenyerapan, 2, ',', '.') . '%')
                 ->description('dari total pagu TA ' . $tahun)
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color($persentasePenyerapan >= 50 ? 'success' : 'warning'),
+                ->color('success')
+                ->extraAttributes(['style' => self::GRADIENTS['c4']['style']]),
         ];
     }
 }

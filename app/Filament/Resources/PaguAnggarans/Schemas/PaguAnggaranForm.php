@@ -25,6 +25,7 @@ class PaguAnggaranForm
                         ->all())
                     ->searchable()
                     ->preload()
+                    ->live()
                     ->required(),
 
                 TextInput::make('tahun')
@@ -33,7 +34,8 @@ class PaguAnggaranForm
                     ->numeric()
                     ->integer()
                     ->minValue(2020)
-                    ->maxValue(2100),
+                    ->maxValue(2100)
+                    ->live(),
 
                 TextInput::make('nomor_revisi')
                     ->label('Nomor Revisi')
@@ -41,7 +43,18 @@ class PaguAnggaranForm
                     ->required()
                     ->numeric()
                     ->integer()
-                    ->minValue(0),
+                    ->minValue(0)
+                    ->unique(
+                        table: 'pagu_anggarans',
+                        column: 'nomor_revisi',
+                        modifyRuleUsing: fn ($rule, callable $get) => $rule
+                            ->where('ikk_id', $get('ikk_id'))
+                            ->where('tahun', $get('tahun')),
+                        ignoreRecord: true,
+                    )
+                    ->validationMessages([
+                        'unique' => 'Pagu untuk IKK, Tahun, dan Nomor Revisi ini sudah pernah dibuat.',
+                    ]),
 
                 TextInput::make('nilai_pagu')
                     ->label('Nilai Pagu (Rp)')

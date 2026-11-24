@@ -7,7 +7,10 @@ use App\Filament\Widgets\DashboardAnggaranPerIKK;
 use App\Filament\Widgets\DashboardAnggaranPie;
 use App\Filament\Widgets\DashboardCapaianIKK;
 use App\Filament\Widgets\DashboardKinerjaKapus;
+use App\Filament\Widgets\DashboardJadwalDeadline;
 use App\Filament\Widgets\DashboardRingkasan;
+use App\Filament\Widgets\DashboardPicActionItems;
+use App\Filament\Widgets\DashboardPicLaporanTable;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
@@ -20,8 +23,8 @@ class Dashboard extends BaseDashboard
     public function getTitle(): string
     {
         return auth()->user()?->role === 'kapus'
-            ? 'Dashboard Pimpinan'
-            : 'Dashboard Monitoring Kinerja & Anggaran';
+            ? 'Dashboard Pimpinan — SIMONIKA'
+            : 'Dashboard SIMONIKA';
     }
 
     public function getSubheading(): ?string
@@ -34,6 +37,7 @@ class Dashboard extends BaseDashboard
     {
         if (auth()->user()?->role === 'admin') {
             redirect(\App\Filament\Resources\Users\UserResource::getUrl('index'));
+            return;
         }
     }
 
@@ -54,6 +58,7 @@ class Dashboard extends BaseDashboard
             ->components([
                 Select::make('tahun')
                     ->label('Tahun Anggaran')
+                    ->live()
                     ->options(function () {
                         $currentYear = (int) now()->year;
                         $years = \App\Models\TargetIkk::distinct()->pluck('tahun')
@@ -70,25 +75,67 @@ class Dashboard extends BaseDashboard
 
                 Select::make('bulan')
                     ->label('Periode')
-                    ->options([
-                        1 => 's.d. Januari',
-                        2 => 's.d. Februari',
-                        3 => 's.d. Maret',
-                        4 => 's.d. April',
-                        5 => 's.d. Mei',
-                        6 => 's.d. Juni',
-                        7 => 's.d. Juli',
-                        8 => 's.d. Agustus',
-                        9 => 's.d. September',
-                        10 => 's.d. Oktober',
-                        11 => 's.d. November',
-                        12 => 's.d. Desember',
-                    ])
-                    ->default(function () {
-                        $maxBulan = \App\Models\LaporanBulanan::where('tahun', now()->year)
+                    ->options(function ($get) {
+                        $tahun = (int) ($get('tahun') ?? now()->year);
+
+                        // Ambil batas bulan maksimum yang ada datanya
+                        $maxBulanLaporan = (int) \App\Models\LaporanBulanan::where('tahun', $tahun)->max('bulan');
+                        $maxBulanAnggaran = (int) \App\Models\AnggaranBulanan::where('tahun', $tahun)
+                            ->whereNotNull('realisasi_anggaran')
+                            ->where('realisasi_anggaran', '>', 0)
+                            ->max('bulan');
+
+                        $maxBulanData = max($maxBulanLaporan, $maxBulanAnggaran);
+
+                        // Batasi sampai bulan berjalan (now()->month) dan yang ada datanya
+                        if ($tahun === (int) now()->year) {
+                            $maxLimit = $maxBulanData > 0 
+                                ? min((int) now()->month, $maxBulanData)
+                                : (int) now()->month;
+                        } else {
+                            $maxLimit = $maxBulanData > 0 ? min(12, $maxBulanData) : 12;
+                        }
+
+                        $maxLimit = max(1, $maxLimit);
+
+                        $namaBulan = [
+                            1  => 's.d. Januari',
+                            2  => 's.d. Februari',
+                            3  => 's.d. Maret',
+                            4  => 's.d. April',
+                            5  => 's.d. Mei',
+                            6  => 's.d. Juni',
+                            7  => 's.d. Juli',
+                            8  => 's.d. Agustus',
+                            9  => 's.d. September',
+                            10 => 's.d. Oktober',
+                            11 => 's.d. November',
+                            12 => 's.d. Desember',
+                        ];
+
+                        $options = [];
+                        for ($m = 1; $m <= $maxLimit; $m++) {
+                            $options[$m] = $namaBulan[$m];
+                        }
+
+                        return $options;
+                    })
+                    ->default(function ($get) {
+                        $tahun = (int) ($get('tahun') ?? now()->year);
+                        $maxBulanFinal = (int) \App\Models\LaporanBulanan::where('tahun', $tahun)
                             ->where('status', 'final')
                             ->max('bulan');
-                        return $maxBulan ?: 7;
+
+                        if ($maxBulanFinal > 0) {
+                            return ($tahun === (int) now()->year) ? min((int) now()->month, $maxBulanFinal) : $maxBulanFinal;
+                        }
+
+                        $maxBulanData = (int) \App\Models\LaporanBulanan::where('tahun', $tahun)->max('bulan');
+                        if ($maxBulanData > 0) {
+                            return ($tahun === (int) now()->year) ? min((int) now()->month, $maxBulanData) : $maxBulanData;
+                        }
+
+                        return ($tahun === (int) now()->year) ? (int) now()->month : 7;
                     }),
             ]);
     }
@@ -99,25 +146,34 @@ class Dashboard extends BaseDashboard
 
         return match ($role) {
             'kapus' => [
-                DashboardRingkasan::class,      // sort 1: 4 stats cards (Total Indikator, Realisasi Kinerja, Realisasi Anggaran, Penyerapan)
-                DashboardKinerjaKapus::class,   // sort 2 (left): Tren Capaian Kinerja (Rata-rata) Line Chart
-                DashboardAnggaran::class,       // sort 3 (right): Penyerapan Anggaran per Bulan Bar Chart
-                DashboardCapaianIKK::class,     // sort 4: Daftar Indikator Kinerja (7 IKK) Table
-                DashboardAnggaranPie::class,    // sort 5: Ringkasan Anggaran Donut
-                DashboardAnggaranPerIKK::class, // sort 6: Pagu vs Realisasi per IKK
-            ],
-
-            'katim_umper', 'kabag_umum' => [
+                DashboardJadwalDeadline::class,
                 DashboardRingkasan::class,
-                DashboardKinerjaKapus::class,
+                DashboardAnggaranPie::class,
                 DashboardAnggaran::class,
                 DashboardCapaianIKK::class,
-                DashboardAnggaranPie::class,
                 DashboardAnggaranPerIKK::class,
             ],
 
-            'pic', 'kabid_kabag' => [
+            'katim_umper', 'kabag_umum' => [
+                DashboardJadwalDeadline::class,
                 DashboardRingkasan::class,
+                DashboardAnggaranPie::class,
+                DashboardAnggaran::class,
+                DashboardCapaianIKK::class,
+                DashboardAnggaranPerIKK::class,
+            ],
+
+            'pic' => [
+                DashboardJadwalDeadline::class,
+                DashboardRingkasan::class,
+                DashboardPicActionItems::class,
+                DashboardPicLaporanTable::class,
+            ],
+
+            'kabid_kabag' => [
+                DashboardJadwalDeadline::class,
+                DashboardRingkasan::class,
+                DashboardCapaianIKK::class,
             ],
 
             default => [],

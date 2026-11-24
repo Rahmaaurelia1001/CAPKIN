@@ -184,6 +184,7 @@ class LaporanBulananForm
                             ->options([
                                 'PNBP' => 'PNBP',
                                 'RM' => 'RM',
+                                'PNBP/RM' => 'PNBP/RM',
                             ])
                             ->required(),
 

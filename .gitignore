@@ -21,6 +21,10 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/backup*
+/storage/app/public/bukti-dukung/*
+!/storage/app/public/bukti-dukung/.gitignore
+*.sql
 /vendor
 Homestead.json
 Homestead.yaml

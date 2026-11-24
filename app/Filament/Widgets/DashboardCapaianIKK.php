@@ -48,7 +48,19 @@ class DashboardCapaianIKK extends TableWidget
                     ->label('Nama Indikator Kinerja')
                     ->wrap()
                     ->searchable()
-                    ->description(fn (Ikk $r): string => $r->satuan ? 'Satuan: ' . $r->satuan : ''),
+                    ->description(function (Ikk $r): string {
+                        $satuanTampil = match ($r->kode_ikk) {
+                            'IKK 20' => 'Orang',
+                            'IKK 21' => 'Dokumen',
+                            'IKK 22' => 'Nilai',
+                            'IKK 24' => '%',
+                            'IKK 25' => 'Nilai',
+                            'IKK 26' => 'Nilai',
+                            'IKK 28' => '%',
+                            default  => $r->satuan ?? '',
+                        };
+                        return $satuanTampil ? 'Satuan: ' . $satuanTampil : '';
+                    }),
 
                 Tables\Columns\TextColumn::make('target_tahun')
                     ->label('Target')
@@ -57,9 +69,10 @@ class DashboardCapaianIKK extends TableWidget
                         $target = $record->periode
                             ->flatMap(fn ($p) => $p->targetIkks)
                             ->first();
-                        return $target
-                            ? number_format((float) $target->nilai_target, 0, ',', '.')
-                            : '—';
+                        if (! $target) return '—';
+                        $val = (float) $target->nilai_target;
+                        $dec = in_array($record->kode_ikk, ['IKK 22', 'IKK 25', 'IKK 26'], true) ? 2 : 0;
+                        return number_format($val, $dec, ',', '.');
                     }),
 
                 Tables\Columns\TextColumn::make('realisasi')
@@ -70,7 +83,9 @@ class DashboardCapaianIKK extends TableWidget
                         if (! ($hasil['ada_laporan_final'] ?? false)) {
                             return '—';
                         }
-                        return number_format((float) $hasil['realisasi_kumulatif'], 0, ',', '.');
+                        $val = (float) $hasil['realisasi_kumulatif'];
+                        $dec = in_array($record->kode_ikk, ['IKK 20', 'IKK 21'], true) ? 0 : 2;
+                        return number_format($val, $dec, ',', '.');
                     }),
 
                 Tables\Columns\TextColumn::make('capaian')
@@ -86,7 +101,7 @@ class DashboardCapaianIKK extends TableWidget
                     })
                     ->formatStateUsing(
                         fn (?float $state): string =>
-                            $state === null ? 'Belum Ada' : number_format($state, 1, ',', '.') . '%'
+                            $state === null ? 'Belum Ada' : number_format($state, 2, ',', '.') . '%'
                     )
                     ->color(
                         fn (?float $state): string =>

@@ -46,7 +46,18 @@ class AnggaranBulananForm
                         12 => 'Desember',
                     ])
                     ->live()
-                    ->required(),
+                    ->required()
+                    ->unique(
+                        table: 'anggaran_bulanans',
+                        column: 'bulan',
+                        modifyRuleUsing: fn ($rule, callable $get) => $rule
+                            ->where('ikk_id', $get('ikk_id'))
+                            ->where('tahun', $get('tahun')),
+                        ignoreRecord: true,
+                    )
+                    ->validationMessages([
+                        'unique' => 'Realisasi anggaran untuk IKK, Bulan, dan Tahun ini sudah pernah dibuat.',
+                    ]),
 
                 TextInput::make('tahun')
                     ->label('Tahun')
@@ -113,6 +124,7 @@ class AnggaranBulananForm
 
                 TextInput::make('realisasi_anggaran')
                     ->label('Realisasi Anggaran (Rp)')
+                    ->helperText('Masukkan realisasi kumulatif s.d. bulan ini.')
                     ->numeric()
                     ->minValue(0)
                     ->prefix('Rp')

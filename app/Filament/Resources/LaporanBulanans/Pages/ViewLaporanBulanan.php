@@ -5,6 +5,7 @@ namespace App\Filament\Resources\LaporanBulanans\Pages;
 use App\Filament\Resources\LaporanBulanans\LaporanBulananResource;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Resources\Pages\ViewRecord;
@@ -20,241 +21,75 @@ class ViewLaporanBulanan extends ViewRecord
     public function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Informasi Laporan')
-                ->columns(2)
+            ViewEntry::make('hero_banner')
+                ->view('filament.infolists.laporan-hero-banner')
+                ->columnSpanFull(),
+
+            Section::make('Alur & Riwayat Persetujuan')
+                ->icon('heroicon-o-check-badge')
+                ->columnSpanFull()
                 ->schema([
-                    TextEntry::make('ikk.kode_ikk')
-                        ->label('Kode IKK'),
-
-                    TextEntry::make('ikk.nama_ikk')
-                        ->label('Indikator Kinerja'),
-
-                    TextEntry::make('sasaran_kegiatan')
-                        ->label('Sasaran Kegiatan Induk')
-                        ->state(fn ($record) => $record->ikk?->sasaranKegiatan
-                            ? "{$record->ikk->sasaranKegiatan->kode} — {$record->ikk->sasaranKegiatan->nama}"
-                            : '-'
-                        )
+                    ViewEntry::make('timeline')
+                        ->view('filament.infolists.riwayat-persetujuan-timeline')
                         ->columnSpanFull(),
-
-                    TextEntry::make('unit.nama')
-                        ->label('Unit Kerja'),
-
-                    TextEntry::make('pic.name')
-                        ->label('PIC'),
-
-                    TextEntry::make('bulan')
-                        ->label('Bulan')
-                        ->formatStateUsing(fn ($state) => [
-                            1 => 'Januari',
-                            2 => 'Februari',
-                            3 => 'Maret',
-                            4 => 'April',
-                            5 => 'Mei',
-                            6 => 'Juni',
-                            7 => 'Juli',
-                            8 => 'Agustus',
-                            9 => 'September',
-                            10 => 'Oktober',
-                            11 => 'November',
-                            12 => 'Desember',
-                        ][$state] ?? $state),
-
-                    TextEntry::make('tahun')
-                        ->label('Tahun'),
-
-                    TextEntry::make('realisasi')
-                        ->label('Realisasi Laporan')
-                        ->state(function ($record): string {
-                            $ikk = $record->ikk;
-                            if (! $ikk) return '0';
-
-                            $kodeIkk = strtoupper(str_replace([' ', '_', '-'], '', (string) $ikk->kode_ikk));
-
-                            if ($kodeIkk === 'IKK20') {
-                                $totalPeserta = (int) $record->rincianPelatihans()->sum('jumlah_peserta');
-                                return number_format($totalPeserta, 0, ',', '.') . ' Orang';
-                            }
-
-                            if ($kodeIkk === 'IKK21') {
-                                $totalNspk = (int) $record->rincianNSPKs()->count();
-                                return number_format($totalNspk, 0, ',', '.') . ' Dokumen';
-                            }
-
-                            if ($ikk->jenis_perhitungan === 'gabungan') {
-                                $angka = $record->angkaKinerjas()->with('ikkKomponen')->get();
-                                $capaian = 0;
-                                foreach ($angka as $item) {
-                                    if ($item->penyebut > 0 && $item->ikkKomponen) {
-                                        $capaian += ((float) $item->pembilang / (float) $item->penyebut) * 100 * ((float) $item->ikkKomponen->bobot / 100);
-                                    }
-                                }
-                                return number_format($capaian, 2, ',', '.') . '%';
-                            }
-
-                            $satuan = $ikk->satuan ?: '';
-                            return number_format((float) $record->realisasi, 2, ',', '.') . ($satuan ? " {$satuan}" : '');
-                        }),
-
-                    TextEntry::make('catatan')
-                        ->label('Catatan PIC')
-                        ->placeholder('Tidak ada catatan')
-                        ->columnSpanFull(),
-
-                    TextEntry::make('narasi_capaian')
-                        ->label('Narasi Capaian')
-                        ->placeholder('Belum diisi')
-                        ->columnSpanFull(),
-
-                    TextEntry::make('kendala')
-                        ->label('Kendala')
-                        ->placeholder('Tidak ada kendala')
-                        ->columnSpanFull(),
-
-                    TextEntry::make('tindak_lanjut')
-                        ->label('Tindak Lanjut')
-                        ->placeholder('Belum diisi')
-                        ->columnSpanFull(),
-
-                    TextEntry::make('realisasi_anggaran')
-                        ->label('Realisasi Anggaran')
-                        ->state(function ($record) {
-                            $anggaran = \App\Models\AnggaranBulanan::where('ikk_id', $record->ikk_id)
-                                ->where('bulan', $record->bulan)
-                                ->where('tahun', $record->tahun)
-                                ->first();
-                            $nominal = $anggaran ? (float) $anggaran->realisasi_anggaran : (float) ($record->realisasi_anggaran ?? 0);
-                            return $nominal > 0 ? 'Rp ' . number_format($nominal, 0, ',', '.') : 'Belum diisi oleh Katim Umper';
-                        }),
-
-                    TextEntry::make('status')
-                        ->label('Status Laporan')
-                        ->badge(),
-
-                    TextEntry::make('bukti_dukung')
-                    ->label('Bukti Pendukung')
-                    ->formatStateUsing(fn ($state) =>
-                        $state ? basename($state) : 'Belum ada bukti'
-                    )
-                    ->url(fn ($record) =>
-                        $record->bukti_dukung
-                            && Storage::disk('public')->exists($record->bukti_dukung)
-                                ? Storage::disk('public')->url($record->bukti_dukung)
-                                : null
-                    )
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->color('primary')
-                    ->columnSpanFull(),
-                     ]),
+                ]),
 
             Section::make('Detail Pelatihan — IKK 20')
+                ->icon('heroicon-o-academic-cap')
+                ->columnSpanFull()
                 ->visible(fn ($record) =>
                     strtoupper(str_replace([' ', '_', '-'], '', (string) $record->ikk?->kode_ikk)) === 'IKK20'
                 )
                 ->schema([
-                    RepeatableEntry::make('rincianPelatihans')
-                        ->label('')
-                        ->schema([
-                            TextEntry::make('nama_pelatihan')->label('Nama Pelatihan'),
-                            TextEntry::make('sumber_dana')->label('Sumber Dana'),
-                            TextEntry::make('jumlah_peserta')->label('Jumlah Peserta'),
-                            TextEntry::make('jumlah_lulus')->label('Jumlah Lulus'),
-                            TextEntry::make('jumlah_laki_laki')->label('Laki-laki'),
-                            TextEntry::make('jumlah_perempuan')->label('Perempuan'),
-                        ])
-                        ->columns(2),
+                    ViewEntry::make('detail_pelatihan')
+                        ->view('filament.infolists.detail-pelatihan-cards')
+                        ->columnSpanFull(),
                 ]),
 
             Section::make('Detail NSPK — IKK 21')
+                ->icon('heroicon-o-document-text')
+                ->columnSpanFull()
                 ->visible(fn ($record) =>
                     strtoupper(str_replace([' ', '_', '-'], '', (string) $record->ikk?->kode_ikk)) === 'IKK21'
                 )
                 ->schema([
-                    RepeatableEntry::make('rincianNSPKs')
-                        ->label('')
-                        ->schema([
-                            TextEntry::make('jenis_nspk')->label('Jenis NSPK'),
-                            TextEntry::make('nama_nspk')->label('Nama NSPK'),
-                            TextEntry::make('keterangan')->label('Keterangan'),
-                        ])
-                        ->columns(2),
+                    ViewEntry::make('detail_nspk')
+                        ->view('filament.infolists.detail-nspk-cards')
+                        ->columnSpanFull(),
                 ]),
 
             Section::make('Detail Komponen Akuntabilitas — IKK 24')
+                ->icon('heroicon-o-chart-pie')
+                ->columnSpanFull()
                 ->visible(fn ($record) =>
                     strtoupper(str_replace([' ', '_', '-'], '', (string) $record->ikk?->kode_ikk)) === 'IKK24'
                 )
                 ->schema([
-                    RepeatableEntry::make('angkaKinerjas')
-                        ->label('')
-                        ->schema([
-                            TextEntry::make('ikkKomponen.nama_komponen')->label('Komponen'),
-                            TextEntry::make('ikkKomponen.bobot')->label('Bobot')->formatStateUsing(fn ($state) => "{$state}%"),
-                            TextEntry::make('pembilang')->label('Realisasi (Pembilang)'),
-                            TextEntry::make('penyebut')->label('Target (Penyebut)'),
-                            TextEntry::make('capaian_komponen')
-                                ->label('Capaian Komponen')
-                                ->state(fn ($record) => (float) $record->penyebut > 0
-                                    ? number_format(((float) $record->pembilang / (float) $record->penyebut) * 100, 2, ',', '.') . '%'
-                                    : '0%'),
-                        ])
-                        ->columns(3),
+                    ViewEntry::make('detail_komponen')
+                        ->view('filament.infolists.detail-komponen-cards')
+                        ->columnSpanFull(),
                 ]),
 
             Section::make('Detail Kerja Sama — IKK 28')
+                ->icon('heroicon-o-user-group')
+                ->columnSpanFull()
                 ->visible(fn ($record) =>
                     strtoupper(str_replace([' ', '_', '-'], '', (string) $record->ikk?->kode_ikk)) === 'IKK28'
                 )
                 ->schema([
-                    RepeatableEntry::make('angkaKinerjas')
-                        ->label('Komponen Berbobot')
-                        ->schema([
-                            TextEntry::make('ikkKomponen.nama_komponen')->label('Komponen'),
-                            TextEntry::make('ikkKomponen.bobot')->label('Bobot')->formatStateUsing(fn ($state) => "{$state}%"),
-                            TextEntry::make('pembilang')->label('Realisasi (Pembilang)'),
-                            TextEntry::make('penyebut')->label('Target (Penyebut)'),
-                            TextEntry::make('capaian_komponen')
-                                ->label('Capaian Komponen')
-                                ->state(fn ($record) => (float) $record->penyebut > 0
-                                    ? number_format(((float) $record->pembilang / (float) $record->penyebut) * 100, 2, ',', '.') . '%'
-                                    : '0%'),
-                        ])
-                        ->columns(3),
-
-                    RepeatableEntry::make('rincianKerjasamas')
-                        ->label('Daftar Judul Kerja Sama')
-                        ->schema([
-                            TextEntry::make('judul_kerjasama')->label('Judul Kerja Sama'),
-                        ])
-                        ->columns(1),
+                    ViewEntry::make('detail_kerjasama')
+                        ->view('filament.infolists.detail-kerjasama-cards')
+                        ->columnSpanFull(),
                 ]),
 
-            Section::make('Riwayat Persetujuan')
-                    ->schema([
-                        RepeatableEntry::make('persetujuan')
-                            ->label('')
-                            ->schema([
-                                TextEntry::make('tahap')
-                                    ->label('Tahap'),
-
-                                TextEntry::make('user.name')
-                                    ->label('Pejabat'),
-
-                                TextEntry::make('keputusan')
-                                    ->label('Keputusan')
-                                    ->badge(),
-
-                                TextEntry::make('catatan')
-                                    ->label('Catatan Pejabat')
-                                    ->placeholder('Tidak ada catatan'),
-
-                                TextEntry::make('diproses_pada')
-                                    ->label('Waktu')
-                                    ->dateTime('d/m/Y H:i'),
-                            ])
-                            ->columns(2),
-                    ]),
+            Section::make('Catatan Pelaporan & Bukti Pendukung')
+                ->icon('heroicon-o-clipboard-document-list')
+                ->columnSpanFull()
+                ->schema([
+                    ViewEntry::make('detail_info')
+                        ->view('filament.infolists.detail-info-laporan')
+                        ->columnSpanFull(),
+                ]),
         ]);
     }
 
