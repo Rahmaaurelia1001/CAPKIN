@@ -117,153 +117,191 @@ class DataKinerja2026Seeder extends Seeder
             }
 
             // -------------------------------------------------------
-            // 4. Pagu Anggaran 2026 per IKK (Sesuai Spreadsheet)
+            // 4. Pagu Anggaran 2026 per IKK (Sesuai Excel Formula Resmi)
             // -------------------------------------------------------
-            $paguData = [
-                'IKK 20' => ['pagu' => 21_456_042_000, 'revisi_bulan' => 7, 'pagu_revisi' => 21_456_042_000],
-                'IKK 21' => ['pagu' =>    587_762_000, 'revisi_bulan' => null],
-                'IKK 22' => ['pagu' => 12_250_911_000, 'revisi_bulan' => null],
-                'IKK 24' => ['pagu' => 39_585_150_000, 'revisi_bulan' => null],
-                'IKK 25' => ['pagu' =>  1_555_936_000, 'revisi_bulan' => null],
-                'IKK 26' => ['pagu' =>  1_555_936_000, 'revisi_bulan' => null],
-                'IKK 28' => ['pagu' =>    102_498_000, 'revisi_bulan' => null],
+            // Bersihkan data lama terlebih dahulu agar susunan pagu dan revisi bersih
+            AnggaranBulanan::where('tahun', $tahun)->delete();
+            PaguAnggaran::where('tahun', $tahun)->delete();
+
+            $paguConfig = [
+                'IKK 20' => [
+                    ['revisi' => 0, 'bulan' => 1,  'nilai' => 20_382_581_000, 'ket' => 'Pagu DIPA Awal 2026'],
+                    ['revisi' => 1, 'bulan' => 2,  'nilai' => 19_584_464_000, 'ket' => 'Revisi Pagu Februari 2026'],
+                    ['revisi' => 2, 'bulan' => 4,  'nilai' => 14_674_377_000, 'ket' => 'Revisi Pagu April 2026'],
+                    ['revisi' => 3, 'bulan' => 5,  'nilai' => 14_859_121_000, 'ket' => 'Revisi Pagu Mei 2026'],
+                    ['revisi' => 4, 'bulan' => 6,  'nilai' => 21_456_042_000, 'ket' => 'Revisi Pagu Juni 2026'],
+                    ['revisi' => 5, 'bulan' => 7,  'nilai' => 19_584_464_000, 'ket' => 'Revisi Pagu Juli 2026'],
+                    ['revisi' => 6, 'bulan' => 8,  'nilai' => 21_456_042_000, 'ket' => 'Revisi Pagu Agustus 2026'],
+                    ['revisi' => 7, 'bulan' => 10, 'nilai' => 22_427_336_000, 'ket' => 'Revisi Pagu Oktober 2026'],
+                ],
+                'IKK 21' => [
+                    ['revisi' => 0, 'bulan' => 1,  'nilai' =>    637_091_000, 'ket' => 'Pagu DIPA Awal 2026'],
+                    ['revisi' => 1, 'bulan' => 2,  'nilai' =>  1_378_919_000, 'ket' => 'Revisi Pagu Februari 2026'],
+                    ['revisi' => 2, 'bulan' => 4,  'nilai' =>    587_762_000, 'ket' => 'Revisi Pagu April 2026'],
+                ],
+                'IKK 22' => [
+                    ['revisi' => 0, 'bulan' => 1,  'nilai' => 18_973_805_000, 'ket' => 'Pagu DIPA Awal 2026'],
+                    ['revisi' => 1, 'bulan' => 2,  'nilai' => 18_568_340_000, 'ket' => 'Revisi Pagu Februari 2026'],
+                    ['revisi' => 2, 'bulan' => 4,  'nilai' => 15_565_351_000, 'ket' => 'Revisi Pagu April 2026'],
+                    ['revisi' => 3, 'bulan' => 6,  'nilai' => 12_250_911_000, 'ket' => 'Revisi Pagu Juni 2026'],
+                    ['revisi' => 4, 'bulan' => 10, 'nilai' => 12_222_985_000, 'ket' => 'Revisi Pagu Oktober 2026'],
+                ],
+                'IKK 24' => [
+                    ['revisi' => 0, 'bulan' => 1,  'nilai' => 37_644_836_000, 'ket' => 'Pagu DIPA Awal 2026'],
+                    ['revisi' => 1, 'bulan' => 2,  'nilai' => 37_801_029_000, 'ket' => 'Revisi Pagu Februari 2026'],
+                    ['revisi' => 2, 'bulan' => 4,  'nilai' => 39_291_743_000, 'ket' => 'Revisi Pagu April 2026'],
+                    ['revisi' => 3, 'bulan' => 7,  'nilai' => 39_585_150_000, 'ket' => 'Revisi Pagu Juli 2026'],
+                    ['revisi' => 4, 'bulan' => 10, 'nilai' => 39_459_484_000, 'ket' => 'Revisi Pagu Oktober 2026'],
+                ],
+                'IKK 25' => [
+                    ['revisi' => 0, 'bulan' => 1,  'nilai' =>  1_755_326_000, 'ket' => 'Pagu DIPA Awal 2026'],
+                    ['revisi' => 1, 'bulan' => 2,  'nilai' =>  1_567_140_000, 'ket' => 'Revisi Pagu Februari 2026'],
+                    ['revisi' => 2, 'bulan' => 4,  'nilai' =>  1_392_554_000, 'ket' => 'Revisi Pagu April 2026'],
+                    ['revisi' => 3, 'bulan' => 6,  'nilai' =>  1_555_936_000, 'ket' => 'Revisi Pagu Juni 2026'],
+                ],
+                'IKK 26' => [
+                    ['revisi' => 0, 'bulan' => 1,  'nilai' =>  1_755_326_000, 'ket' => 'Pagu DIPA Awal 2026'],
+                    ['revisi' => 1, 'bulan' => 2,  'nilai' =>  1_567_140_000, 'ket' => 'Revisi Pagu Februari 2026'],
+                    ['revisi' => 2, 'bulan' => 4,  'nilai' =>  1_392_554_000, 'ket' => 'Revisi Pagu April 2026'],
+                    ['revisi' => 3, 'bulan' => 6,  'nilai' =>  1_555_936_000, 'ket' => 'Revisi Pagu Juni 2026'],
+                ],
+                'IKK 28' => [
+                    ['revisi' => 0, 'bulan' => 1,  'nilai' =>    127_014_000, 'ket' => 'Pagu DIPA Awal 2026'],
+                    ['revisi' => 1, 'bulan' => 3,  'nilai' =>    287_640_000, 'ket' => 'Revisi Pagu Maret 2026'],
+                    ['revisi' => 2, 'bulan' => 4,  'nilai' =>    102_498_000, 'ket' => 'Revisi Pagu April 2026'],
+                ],
             ];
 
-            $paguRefs = [];
-            foreach ($paguData as $kode => $item) {
+            foreach ($paguConfig as $kode => $revisis) {
                 $ikk = Ikk::where('kode_ikk', $kode)->first();
                 if (! $ikk) continue;
 
-                $paguAwal = PaguAnggaran::updateOrCreate(
-                    ['ikk_id' => $ikk->id, 'tahun' => $tahun, 'nomor_revisi' => 0],
-                    [
-                        'nilai_pagu'          => $item['pagu'],
-                        'berlaku_mulai_bulan' => 1,
-                        'keterangan'          => 'Pagu DIPA 2026',
-                    ]
-                );
-                $paguRefs[$kode]['awal'] = $paguAwal;
-
-                if (! empty($item['revisi_bulan'])) {
-                    $paguRevisi = PaguAnggaran::updateOrCreate(
-                        ['ikk_id' => $ikk->id, 'tahun' => $tahun, 'nomor_revisi' => 1],
-                        [
-                            'nilai_pagu'          => $item['pagu_revisi'],
-                            'berlaku_mulai_bulan' => $item['revisi_bulan'],
-                            'keterangan'          => 'Revisi Pagu Anggaran Semester II',
-                        ]
-                    );
-                    $paguRefs[$kode]['revisi'] = $paguRevisi;
+                foreach ($revisis as $r) {
+                    PaguAnggaran::create([
+                        'ikk_id'              => $ikk->id,
+                        'tahun'               => $tahun,
+                        'nomor_revisi'        => $r['revisi'],
+                        'nilai_pagu'          => $r['nilai'],
+                        'berlaku_mulai_bulan' => $r['bulan'],
+                        'keterangan'          => $r['ket'],
+                    ]);
                 }
             }
 
             // -------------------------------------------------------
-            // 5. Realisasi Anggaran Bulanan Jan s.d. Sep 2026 (Kumulatif)
+            // 5. Realisasi Anggaran Bulanan Jan s.d. Okt 2026 (Kumulatif)
             // -------------------------------------------------------
-            // Hapus data anggaran tahun 2026 lama agar bersih
-            AnggaranBulanan::where('tahun', $tahun)->delete();
-
             $realisasiBulananSemuaIKK = [
                 // IKK 20
                 'IKK 20' => [
-                    1 => ['realisasi' => 0,              'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
-                    2 => ['realisasi' => 510_150_000,    'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 1_658_742_245,  'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 5_070_024_890,  'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 6_567_500_000,  'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 7_718_000_750,  'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 8_758_342_645,  'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
-                    8 => ['realisasi' => 10_250_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
-                    9 => ['realisasi' => 12_500_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    1  => ['realisasi' => 0,                  'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
+                    2  => ['realisasi' => 513_844_879,        'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3  => ['realisasi' => 1_658_772_719,      'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4  => ['realisasi' => 5_070_829_599,      'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5  => ['realisasi' => 6_567_308_889,      'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6  => ['realisasi' => 7_718_638_799,      'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7  => ['realisasi' => 11_834_862_645,     'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8  => ['realisasi' => 13_872_696_687,     'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9  => ['realisasi' => 14_090_288_687,     'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    10 => ['realisasi' => 20_034_184_461,     'ket' => 'Realisasi anggaran s.d. bulan 10 tahun 2026'],
                 ],
                 // IKK 21 (Bulan 1 belum ada nilai [-])
                 'IKK 21' => [
-                    1 => ['realisasi' => null,          'ket' => 'Belum ada nilai (-)'],
-                    2 => ['realisasi' => 14_230_000,    'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 155_940_365,   'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 155_940_365,   'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 288_423_365,   'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 432_956_465,   'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 441_056_465,   'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
-                    8 => ['realisasi' => 480_000_000,   'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
-                    9 => ['realisasi' => 530_000_000,   'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    1  => ['realisasi' => null,              'ket' => 'Belum ada nilai (-)'],
+                    2  => ['realisasi' => 14_230_000,        'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3  => ['realisasi' => 155_940_365,       'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4  => ['realisasi' => 155_940_365,       'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5  => ['realisasi' => 288_423_365,       'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6  => ['realisasi' => 432_956_465,       'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7  => ['realisasi' => 441_056_465,       'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8  => ['realisasi' => 441_056_465,       'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9  => ['realisasi' => 445_773_965,       'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    10 => ['realisasi' => 572_891_215,       'ket' => 'Realisasi anggaran s.d. bulan 10 tahun 2026'],
                 ],
                 // IKK 22
                 'IKK 22' => [
-                    1 => ['realisasi' => 1_257_097_921, 'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
-                    2 => ['realisasi' => 1_499_410_240, 'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 2_747_078_253, 'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 4_177_855_457, 'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 4_293_571_214, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 6_585_135_957, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 6_145_204_190, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026 (koreksi/revisi)'],
-                    8 => ['realisasi' => 7_150_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
-                    9 => ['realisasi' => 8_200_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    1  => ['realisasi' => 1_257_097_921,     'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
+                    2  => ['realisasi' => 1_499_410_240,     'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3  => ['realisasi' => 2_747_078_253,     'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4  => ['realisasi' => 4_177_855_457,     'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5  => ['realisasi' => 4_293_571_214,     'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6  => ['realisasi' => 6_585_135_957,     'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7  => ['realisasi' => 6_145_204_190,     'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026 (koreksi/revisi)'],
+                    8  => ['realisasi' => 6_913_015_466,     'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9  => ['realisasi' => 7_638_765_848,     'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    10 => ['realisasi' => 11_512_196_488,    'ket' => 'Realisasi anggaran s.d. bulan 10 tahun 2026'],
                 ],
                 // IKK 24
                 'IKK 24' => [
-                    1 => ['realisasi' => 3_147_570_379,  'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
-                    2 => ['realisasi' => 11_505_726_984, 'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 18_753_051_513, 'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 21_918_338_609, 'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 26_259_267_204, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 26_259_267_204, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 30_685_363_568, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
-                    8 => ['realisasi' => 32_500_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
-                    9 => ['realisasi' => 37_000_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    1  => ['realisasi' => 3_147_570_379,     'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
+                    2  => ['realisasi' => 11_505_726_984,    'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3  => ['realisasi' => 18_753_051_513,    'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4  => ['realisasi' => 21_918_338_609,    'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5  => ['realisasi' => 26_259_267_204,    'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6  => ['realisasi' => 26_259_267_204,    'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7  => ['realisasi' => 30_685_363_568,    'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8  => ['realisasi' => 32_572_860_282,    'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9  => ['realisasi' => 34_450_205_107,    'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    10 => ['realisasi' => 36_729_091_927,    'ket' => 'Realisasi anggaran s.d. bulan 10 tahun 2026'],
                 ],
                 // IKK 25
                 'IKK 25' => [
-                    1 => ['realisasi' => 0,           'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
-                    2 => ['realisasi' => 177_486_572, 'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 428_926_799, 'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 643_954_103, 'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 643_954_103, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 664_872_463, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 746_546_467, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
-                    8 => ['realisasi' => 850_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
-                    9 => ['realisasi' => 950_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    1  => ['realisasi' => 0,                  'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
+                    2  => ['realisasi' => 177_486_572,        'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3  => ['realisasi' => 428_926_799,        'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4  => ['realisasi' => 643_954_103,        'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5  => ['realisasi' => 643_954_103,        'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6  => ['realisasi' => 664_872_463,        'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7  => ['realisasi' => 746_546_467,        'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8  => ['realisasi' => 915_966_717,        'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9  => ['realisasi' => 915_966_717,        'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    10 => ['realisasi' => 1_149_716_997,      'ket' => 'Realisasi anggaran s.d. bulan 10 tahun 2026'],
                 ],
                 // IKK 26
                 'IKK 26' => [
-                    1 => ['realisasi' => 0,           'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
-                    2 => ['realisasi' => 177_486_572, 'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 428_926_799, 'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 643_954_103, 'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 643_954_103, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 664_872_463, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 746_546_467, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
-                    8 => ['realisasi' => 850_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
-                    9 => ['realisasi' => 950_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    1  => ['realisasi' => 0,                  'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
+                    2  => ['realisasi' => 177_486_572,        'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3  => ['realisasi' => 428_926_799,        'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4  => ['realisasi' => 643_954_103,        'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5  => ['realisasi' => 643_954_103,        'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6  => ['realisasi' => 664_872_463,        'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7  => ['realisasi' => 746_546_467,        'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8  => ['realisasi' => 915_966_717,        'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9  => ['realisasi' => 915_966_717,        'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    10 => ['realisasi' => 1_149_716_997,      'ket' => 'Realisasi anggaran s.d. bulan 10 tahun 2026'],
                 ],
                 // IKK 28
                 'IKK 28' => [
-                    1 => ['realisasi' => 0,          'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
-                    2 => ['realisasi' => 0,          'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
-                    3 => ['realisasi' => 62_090_427, 'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
-                    4 => ['realisasi' => 64_417_264, 'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
-                    5 => ['realisasi' => 64_417_264, 'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
-                    6 => ['realisasi' => 64_417_264, 'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
-                    7 => ['realisasi' => 64_417_264, 'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
-                    8 => ['realisasi' => 75_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
-                    9 => ['realisasi' => 85_000_000, 'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    1  => ['realisasi' => 0,                  'ket' => 'Realisasi anggaran s.d. bulan 1 tahun 2026'],
+                    2  => ['realisasi' => 0,                  'ket' => 'Realisasi anggaran s.d. bulan 2 tahun 2026'],
+                    3  => ['realisasi' => 62_090_427,         'ket' => 'Realisasi anggaran s.d. bulan 3 tahun 2026'],
+                    4  => ['realisasi' => 64_417_264,         'ket' => 'Realisasi anggaran s.d. bulan 4 tahun 2026'],
+                    5  => ['realisasi' => 64_417_264,         'ket' => 'Realisasi anggaran s.d. bulan 5 tahun 2026'],
+                    6  => ['realisasi' => 64_417_264,         'ket' => 'Realisasi anggaran s.d. bulan 6 tahun 2026'],
+                    7  => ['realisasi' => 64_417_264,         'ket' => 'Realisasi anggaran s.d. bulan 7 tahun 2026'],
+                    8  => ['realisasi' => 64_417_264,         'ket' => 'Realisasi anggaran s.d. bulan 8 tahun 2026'],
+                    9  => ['realisasi' => 64_417_264,         'ket' => 'Realisasi anggaran s.d. bulan 9 tahun 2026'],
+                    10 => ['realisasi' => 64_417_264,         'ket' => 'Realisasi anggaran s.d. bulan 10 tahun 2026'],
                 ],
             ];
 
             foreach ($realisasiBulananSemuaIKK as $kodeIkk => $bulanData) {
                 $ikk = Ikk::where('kode_ikk', $kodeIkk)->first();
-                if (! $ikk || ! isset($paguRefs[$kodeIkk])) continue;
-
-                $paguAwal   = $paguRefs[$kodeIkk]['awal'];
-                $paguRevisi = $paguRefs[$kodeIkk]['revisi'] ?? $paguAwal;
+                if (! $ikk) continue;
 
                 foreach ($bulanData as $bln => $d) {
-                    $paguId = ($bln >= 7 && isset($paguRefs[$kodeIkk]['revisi'])) ? $paguRevisi->id : $paguAwal->id;
+                    $paguAktif = PaguAnggaran::where('ikk_id', $ikk->id)
+                        ->where('tahun', $tahun)
+                        ->where('berlaku_mulai_bulan', '<=', $bln)
+                        ->orderByDesc('berlaku_mulai_bulan')
+                        ->orderByDesc('nomor_revisi')
+                        ->first();
+
                     AnggaranBulanan::create([
                         'ikk_id'             => $ikk->id,
                         'bulan'              => $bln,
                         'tahun'              => $tahun,
-                        'pagu_anggaran_id'   => $paguId,
+                        'pagu_anggaran_id'   => $paguAktif?->id,
                         'realisasi_anggaran' => $d['realisasi'],
                         'keterangan'         => $d['ket'],
                     ]);
@@ -406,6 +444,7 @@ class DataKinerja2026Seeder extends Seeder
                     7 => [], // Tidak ada dokumen baru di Juli, kumulatif tetap 3 dokumen
                     8 => [], // Tidak ada dokumen baru di Agustus, kumulatif tetap 3 dokumen
                     9 => [], // Tidak ada dokumen baru di September, kumulatif tetap 3 dokumen
+                    10 => [], // Tidak ada dokumen baru di Oktober, kumulatif tetap 3 dokumen
                 ];
 
                 foreach ($nspkBulanan as $bulan => $daftarNspk) {
@@ -457,6 +496,7 @@ class DataKinerja2026Seeder extends Seeder
                     7 => 85.53,
                     8 => 85.53,
                     9 => 85.53,
+                    10 => 85.53,
                 ];
 
                 foreach ($nilaiIkk22 as $bulan => $nilai) {
@@ -503,6 +543,7 @@ class DataKinerja2026Seeder extends Seeder
                     7 => ['a_pem' => 7, 'a_peny' => 13, 'b_pem' => 7, 'b_peny' => 13],
                     8 => ['a_pem' => 7, 'a_peny' => 13, 'b_pem' => 7, 'b_peny' => 13],
                     9 => ['a_pem' => 10, 'a_peny' => 13, 'b_pem' => 10, 'b_peny' => 13],
+                    10 => ['a_pem' => 10, 'a_peny' => 13, 'b_pem' => 10, 'b_peny' => 13],
                 ];
 
                 foreach ($komponenIkk24Bulanan as $bulan => $k) {
@@ -565,6 +606,7 @@ class DataKinerja2026Seeder extends Seeder
                     7 => 95.71,
                     8 => 95.57,
                     9 => 95.82,
+                    10 => 96.02,
                 ];
 
                 foreach ($nilaiIkk25 as $bulan => $nilai) {
@@ -608,6 +650,7 @@ class DataKinerja2026Seeder extends Seeder
                     7 => 85.40,
                     8 => 85.40,
                     9 => 85.40,
+                    10 => 85.40,
                 ];
 
                 foreach ($nilaiIkk26 as $bulan => $nilai) {
@@ -659,6 +702,7 @@ class DataKinerja2026Seeder extends Seeder
                     7 => ['a_pem' => 1, 'a_peny' => 2, 'b_pem' => 1, 'b_peny' => 2],
                     8 => ['a_pem' => 1, 'a_peny' => 2, 'b_pem' => 1, 'b_peny' => 2],
                     9 => ['a_pem' => 2, 'a_peny' => 2, 'b_pem' => 2, 'b_peny' => 2],
+                    10 => ['a_pem' => 2, 'a_peny' => 2, 'b_pem' => 2, 'b_peny' => 2],
                 ];
 
                 foreach ($komponenIkk28Bulanan as $bulan => $k) {

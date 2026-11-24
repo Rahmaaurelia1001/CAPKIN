@@ -75,7 +75,7 @@ class IkkDetailVisualizer
                 ->where('bulan', $b)
                 ->first();
 
-            $anggaranRow = AnggaranBulanan::where('ikk_id', $ikk->id)
+            $anggaranRow = AnggaranBulanan::with('paguAnggaran')->where('ikk_id', $ikk->id)
                 ->where('tahun', $tahun)
                 ->where('bulan', $b)
                 ->first();
@@ -112,8 +112,9 @@ class IkkDetailVisualizer
                     $prevAnggaran = $realisasiAnggKum;
                 }
 
-                $persenAngg = ($nilaiPagu > 0 && $realisasiAnggKum !== null)
-                    ? ($realisasiAnggKum / $nilaiPagu) * 100
+                $paguBulanIni = (float) ($anggaranRow?->paguAnggaran?->nilai_pagu ?? $nilaiPagu);
+                $persenAngg = ($paguBulanIni > 0 && $realisasiAnggKum !== null)
+                    ? ($realisasiAnggKum / $paguBulanIni) * 100
                     : 0;
 
                 // Y Anggaran
@@ -158,20 +159,21 @@ class IkkDetailVisualizer
 
         // Posisi capaian terakhir s.d. bulan aktif
         $posisiTerakhir = $kinerjaCalc->hitung($ikk, min($bulanAktif, $maxBulanFinal), $tahun);
-        $anggaranTerakhir = AnggaranBulanan::where('ikk_id', $ikk->id)
+        $anggaranTerakhir = AnggaranBulanan::with('paguAnggaran')->where('ikk_id', $ikk->id)
             ->where('tahun', $tahun)
             ->where('bulan', '<=', min($bulanAktif, $maxBulanFinal))
             ->whereNotNull('realisasi_anggaran')
             ->orderByDesc('bulan')
             ->first();
 
+        $paguAkhirAktif = (float) ($anggaranTerakhir?->paguAnggaran?->nilai_pagu ?? $nilaiPagu);
         $realisasiAnggAkhir = $anggaranTerakhir ? (float) $anggaranTerakhir->realisasi_anggaran : 0;
-        $persenAnggAkhir = $nilaiPagu > 0 ? ($realisasiAnggAkhir / $nilaiPagu) * 100 : 0;
+        $persenAnggAkhir = $paguAkhirAktif > 0 ? ($realisasiAnggAkhir / $paguAkhirAktif) * 100 : 0;
 
         return [
             'target'              => $nilaiTarget,
             'satuan'              => $satuanTampil,
-            'pagu'                => $nilaiPagu,
+            'pagu'                => $paguAkhirAktif,
             'realisasi_kinerja'   => (float) $posisiTerakhir['realisasi_kumulatif'],
             'capaian_kinerja'     => (float) $posisiTerakhir['capaian_kumulatif'],
             'realisasi_anggaran'  => $realisasiAnggAkhir,
